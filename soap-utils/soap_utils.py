@@ -5,12 +5,19 @@ import time
 
 from itertools import islice
 
+from typing import List
+
 # logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def execute_commands(commands, hacks, max_workers = 10, randomize=False):
+def execute_commands(
+        commands: List[str], 
+        hacks: List[str], 
+        max_workers: int = 10, 
+        randomize: bool =False
+    ) -> None:
     """
     This function runs all the terminal commands specified in `commands` on
         `max_workers` cores / threads.
@@ -49,7 +56,7 @@ def execute_commands(commands, hacks, max_workers = 10, randomize=False):
 
     return None
 
-def run_soap_mac(orb_paths, max_workers = 10):
+def run_soap_mac(orb_paths: List[str], max_workers: int = 10) -> None:
     """
     This function prepares the macOS-specific commands for SOAP to be run 
         and any hacks that are needed to get around soap specific bugs.
@@ -101,14 +108,14 @@ def run_soap_mac(orb_paths, max_workers = 10):
     
     return None
 
-def run_soap_linux():
+def run_soap_linux() -> None:
     """
     This function prepares the Linux/GNU-specific commands for SOAP to be run.
     """
 
     return None
 
-def run_soap_windows():
+def run_soap_windows() -> None:
     """
     This function prepares the Windows-specific commands for SOAP to be run.
     """
