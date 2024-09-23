@@ -5,8 +5,8 @@ import os
 import pandas as pd
 
 from sys import platform
-from typing import List, NoReturn
 
+ERROR = -1
 LINUX = 0
 OSX = 1
 WINDOWS = 2
@@ -88,12 +88,12 @@ def check_os() -> int:
         return WINDOWS
         # Windows...
 
-    return None
+    return ERROR
 
 if __name__ == "__main__":
     assert(check_os() == OSX)
 
-def get_csv_files(folder : str) -> List[str]:
+def get_csv_files(folder : str) -> list[str]:
     """"
     This function returns a list of all files in a folder which are `.csv` 
         files.
@@ -105,7 +105,7 @@ def get_csv_files(folder : str) -> List[str]:
 
     Returns
     -------
-    List[str]
+    list[str]
         A list of strings which are any files in the specfiied folder ending
         with `.csv`
     """
@@ -117,7 +117,7 @@ def get_csv_files(folder : str) -> List[str]:
             filepaths.append(f)
     return filepaths
 
-def get_ext_files(folder: str, ext: str) -> List[str]:
+def get_ext_files(folder: str, ext: str) -> list[str]:
     """
     Returns a list of all files in a given folder with given extension.
         `get_ext_files("./outputs/", "tle")`
@@ -148,7 +148,7 @@ def save_to_outputs_file(
         content: str, 
         filename: str, 
         extension: str
-    ) -> NoReturn:
+    ) -> None:
     """
     This function saves a string to a file in the folder `/outputs/`
 
@@ -165,7 +165,7 @@ def save_to_outputs_file(
     f.write(content)
     f.close()
 
-def make_folder(path: str) -> NoReturn:
+def make_folder(path: str) -> None:
     """
     If the fodler specified by 'path' doesn't exist, this creates it including
         any missing folders leading up to it.
