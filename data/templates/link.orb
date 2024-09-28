@@ -1,0 +1,6 @@
+DEFINE LINK  "{link_name}"
+    PP  "{source}"  "{target}"
+    DISPLAY ON
+    CHST SENSOR 
+    COLOR White
+    THICKNESS 1 
