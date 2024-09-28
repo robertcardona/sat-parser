@@ -2,7 +2,6 @@
 # This file contains file access and OS-related utilities
 
 import os
-import pandas as pd
 
 from sys import platform
 
@@ -52,22 +51,6 @@ def read_file(filepath: str) -> str:
     with open(filepath) as f:
         data = f.read()
     return data
-
-def get_csv_data(filepath: str) -> pd.DataFrame:
-    """
-    This functions reads in a csv file and returns a pandas csv object.
-
-    Parameters
-    ----------
-    filepath : str
-        The path to a csv file as a string
-    
-    Returns
-    -------
-    pd.DataFrame
-        The csv file as a pandas DataFrame
-    """
-    return pd.read_csv(filepath)
 
 def check_os() -> int:
     """
@@ -161,7 +144,7 @@ def save_to_outputs_file(
     extension : str
         The extension of the file to be saved
     """
-    f = open("./outputs/" + filename + "." + extension, "w")
+    f = open("./outputs/" + filename + "." + extension, "w") # TODO : change this
     f.write(content)
     f.close()
 
