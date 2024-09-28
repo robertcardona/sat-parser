@@ -607,6 +607,16 @@ def add_link(source: str, target: str, name: str | None = None) -> str:
 def add_transmitter(name: str) -> str:
     """
     This function returns a transmitter object for the specified platform.
+
+    Parameters
+    ----------
+    name : str
+        This is the name of the platform were the transmitter is added.
+
+    Returns
+    -------
+    str
+        The text of a transmitter object for an orb file.
     """
     template = osu.read_file(base_path / "data/templates/transmitter.orb")
     return template.format(object_name = name)
@@ -614,6 +624,18 @@ def add_transmitter(name: str) -> str:
 def add_receivers(source: str, target: str) -> str:
     """
     This function returns a receiver link object between two platforms.
+
+    Parameters
+    ----------
+    source : str
+        This is the name of the source platform were the receiver is added.
+    target : str
+        This is the name of the target platform were the receiver is added.
+
+    Returns
+    -------
+    str
+        The text of a receiver object for an orb file.
     """
     template = osu.read_file(base_path / "data/templates/receiver.orb")
     return template.format(a = source, b = target)
@@ -648,7 +670,35 @@ def add_analysis_variable(variable: str, source: str, target: str) -> str:
 
     return text
 
-def add_contact_analysis(pairs: list[tuple[str]], step_size: int, name: str, duration: int) -> str:
+def add_contact_analysis(
+    pairs: list[tuple[str]], 
+    step_size: int, 
+    name: str, 
+    duration: int
+) -> str:
+    """
+    This function returns the a contact analysis object for a list of pairs 
+        of platforms.
+    
+    Parameters
+    ----------
+    pairs : list[tuple[str]]
+        This is a list of tuples of type (str, str) which specify the source 
+            and target names of platforms.
+    step_size : int
+        This specifies the desired step size (in seconds) for the analysis.
+            Currently the report is set to `RISE_SET` instead of using this 
+            step size. Can be changed based on need.
+    name : str
+        This is the name of the report.
+    duration : int
+        This is the duration of the analysis (in seconds).
+
+    Returns
+    -------
+    str
+        The text of the analysis report object for an orb file.
+    """
     template = osu.read_file(base_path / "data/templates/analysis_report.orb")
 
     variables = [f'\t"{source} - {target}"\n' for (source, target) in pairs]
