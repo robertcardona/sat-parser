@@ -6,21 +6,23 @@ This file contains functions related to building an orb file than can be
 import orb_parser as op
 import os_utils as osu
 
-from datetime import date
+from datetime import date, datetime
 from itertools import combinations
 from pathlib import Path
 from urllib.request import urlopen
 
-from sgp4.api import Satrec
+from sgp4.api import jday, Satrec
 from sgp4 import exporter, omm
 
 import pandas as pd
+import numpy as np
 import random
 
 base_path = Path(__file__).parent.parent
 # print(f"{base_path = }")
 
-TODAY = date.today()
+TODAY: date = date.today()
+EARTH_RADIUS: int = 6367 # (in km)
 
 def update_tle_sources(group: str, ext: str) -> None:
     """
@@ -395,7 +397,13 @@ def add_platform(platform: dict) -> str:
 
     return template.format(**platform)
 
-def get_tle_platforms(source: str, fmt: str = "csv") -> list[dict]:
+def get_tle_platforms(
+    source: str, 
+    fmt: str = "csv",
+    d: datetime | None = None,
+    dist_min: int | None = None,
+    dist_max: int | None = None
+) -> list[dict]:
     """
     This function returns all the satellites in the file `{source}.{fmt}`.
 
@@ -404,6 +412,17 @@ def get_tle_platforms(source: str, fmt: str = "csv") -> list[dict]:
     source : str
         This should be the name of a tle source file in {fmt} format.
             `base_path / data / {fmt} / {source}.{fmt}`
+    fmt : str 
+        This is the format type to use. Currently handles `csv` or `tle`.
+    d : datetime | None
+        This is a datetime object used for filtering out platforms for that 
+            specific time. Default is `datetime.now()`.
+    dist_min : int | None
+        If `not None` then excludes any platforms whose distance is less than 
+            `dist_min` (in km).
+    dist_max : int | None
+        If `not None` then excludes any platforms whose distance is greater than
+            `dist_max` (in km).
 
     Returns
     -------
@@ -431,11 +450,26 @@ def get_tle_platforms(source: str, fmt: str = "csv") -> list[dict]:
     else:
         rows = None
 
+    if d == None:
+        d = datetime.now()
+    
+    jd, fr = jday(d.year, d.month, d.day, d.hour, d.minute, d.second)
+
     platforms = []
     for index, platform_df in rows:
 
         satellite = Satrec()
         omm.initialize(satellite, platform_df)
+
+        # if outside specified range, skip
+        e, r, v = satellite.sgp4(jd, fr)
+        height = np.sqrt(np.sum(np.asarray(r)**2)) - EARTH_RADIUS
+
+        too_low = dist_min != None and height <= dist_min
+        too_high = dist_max != None and height >= dist_max
+
+        if too_low or too_high:
+            continue
 
         platform = create_norad_platform(
             object_name = platform_df["OBJECT_NAME"],
@@ -495,7 +529,7 @@ def get_martian_platforms() -> list[dict]:
 
     return platforms
 
-def sample_platforms(platforms: list[dict], k: int) -> list[dict]:
+def sample_platforms(platforms: list[dict], k: int | None = None) -> list[dict]:
     """
     This function returns a random sample of `k` elements from `platforms`.
 
@@ -503,14 +537,17 @@ def sample_platforms(platforms: list[dict], k: int) -> list[dict]:
     ----------
     platforms : list[dict]
         This is a list of SOAP platforms as dictionaries.
-    k : int
-        This is the number of elements that are to be sampled from `platforms`
+    k : int | None
+        This is the number of elements that are to be sampled from `platforms`.
+            If k == None then retuns all the platform, shuffled.
 
     Returns
     -------
     list[dict]
         A list containing `k` random elements from `platforms`.
     """
+    if k == None:
+        k = len(platforms)
 
     return random.sample(platforms, k)
 
@@ -783,7 +820,9 @@ def generate_orb(
 
     return text
 
-text = generate_orb(sample_platforms(get_tle_platforms("starlink"), 20), "test", TODAY)
+platforms = get_tle_platforms("starlink", dist_min = 200, dist_max = 800)
+platforms = sample_platforms(platforms, 20)
+text = generate_orb(platforms, "test", TODAY)
 # text = generate_orb([], "test", TODAY)
 with open(base_path / "outputs/test.orb", "w") as f:
     f.write(text)
