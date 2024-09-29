@@ -31,6 +31,7 @@ def contact_analysis_parser_v14(content: str) -> list[dict]:
     """
     logger.info("Running `contact_analysis_parser_v14`")
 
+    contact_plan: list[dict] = [{}]
     return contact_plan
 
 def contact_analysis_parser_v15(content: str) -> list[dict]:
@@ -62,7 +63,7 @@ def contact_analysis_parser_v15(content: str) -> list[dict]:
     content = content.split("Analysis,")[1]
     lines = content.split("\n")[2:-1]
 
-    connections_dict = {}
+    connections_dict: dict[str, list[dict[str, float]]] = {}
     for line in lines:
         entries = line.split(",")
         link = entries[0]
@@ -75,7 +76,7 @@ def contact_analysis_parser_v15(content: str) -> list[dict]:
 
         connections_dict.setdefault(link, []).append(connection)
 
-    contact_plan = []
+    contacts = []
     for link, connections in connections_dict.items():
         source, target = link.split(" - ")
         contact = {
@@ -84,12 +85,15 @@ def contact_analysis_parser_v15(content: str) -> list[dict]:
             "target" : target,
             "connections" : connections
         }
-        contact_plan.append(contact)
+        contacts.append(contact)
 
-    return contact_plan
+    return contacts
 
 # TODO : check if filepath is str type or path
-def contact_analysis_parser(filepath: str | os.PathLike) -> list[dict]:
+def contact_analysis_parser(
+    filepath: str | os.PathLike, 
+    delta: int = 1
+) -> tuple[dict[str, int], dict[tuple[int, int], list[float]]]:
     """
     Main function used to parse a contact analysis csv output from SOAP.
         It takes in a csv from soap v14 or v15 and parses it appropriately.
@@ -98,17 +102,23 @@ def contact_analysis_parser(filepath: str | os.PathLike) -> list[dict]:
     ----------
     filepath : str | os.PathLike
         This is the filepath for the contact analysis report in `.csv` format.
+    delta : int
+        If an edge turns off for time less than `delta`, then we ignore the off
+            time and treat it as having been connected the whole time.
+            
+            Say (u, v) is alive for [0, 49] and [51, 100]. 
+            If delta = 5 we treat this as (u, v) is alive for [0, 100].
 
     Returns
     -------
-    list[dict]
-        This is a list of contacts. Each contact is a dictionary with four 
-            keys : link, source, target and connections. 
-            
-            `link` is the name of the link usually "{source} - {target}",
-            `source` is the name of the source platform,
-            `target` is the name of the target platform,
-            `connections` is a list of rist-set times for this link.
+    nodes : dict[str, int]
+        This is a dictionary of nodes where the key is the platform name as 
+            extracted from the report and the value is an integer id assigned
+            to represent it.
+    edges : dict[tuple[int, int], list[float]]
+        This is a dictionary of edges where the key is a tuple of node id's,
+            ordered from least to greatest id, and the keys are a list of 
+            rise-set times.
     """
     logger.info(f"Running `contact_analysis_parser` on `{filepath}`")
 
@@ -118,13 +128,64 @@ def contact_analysis_parser(filepath: str | os.PathLike) -> list[dict]:
     #   v14 reports begin with a new line; v15 don't. 
     #   if any updates are made this will have to be updated.
     if content[0] == "\n":
-        contact_plan = contact_analysis_parser_v14(content)
+        contacts = contact_analysis_parser_v14(content)
     else:
-        contact_plan = contact_analysis_parser_v15(content)
+        contacts = contact_analysis_parser_v15(content)
 
-    return contact_plan
+    nodes: dict[str, int] = {}
+    edges: dict[tuple[int, int], list[float]]  ={}
+    node_counter = 0
 
-def parse_contact_analysis_time(filepath: str | os.PathLike) -> tuple[datetime]:
+    for contact in contacts:
+
+        link = contact["link"]
+        source = contact["source"]
+        target = contact["target"]
+        connections = contact["connections"]
+
+        if source not in nodes:
+            nodes[source] = node_counter
+            node_counter += 1
+        
+        if target not in nodes:
+            nodes[target] = node_counter
+            node_counter += 1
+
+        source_id, target_id = nodes[source], nodes[target]
+
+        sorted_ids = sorted([source_id, target_id])
+        edge_id = (sorted_ids[0], sorted_ids[1])
+
+        prev_set = -1
+        for connection in connections:
+
+            rise_time = connection["rise"]
+            set_time = connection["set"]
+
+            if prev_set == rise_time or (rise_time - prev_set < delta):
+                # SOAP bug workaround
+                edges[edge_id].pop()
+            else:
+                edges.setdefault(edge_id, []).append(rise_time)
+            
+            edges.setdefault(edge_id, []).append(set_time)
+
+            previous_set_time = set_time
+
+    # contact_plan = {"nodes" : nodes, "edges" : edges}
+    # return contact_plan
+    return nodes, edges
+
+def contact_plan_to_matrix(
+    nodes: dict[str, int],
+    edges: dict[tuple[int, int], list[float]]
+) -> None:
+
+    pass
+
+def parse_contact_analysis_time(
+    filepath: str | os.PathLike
+) -> tuple[datetime, datetime]:
     """
     This function extracts the start end end times of a simulation from a 
         given contact analysis report.
@@ -145,17 +206,19 @@ def parse_contact_analysis_time(filepath: str | os.PathLike) -> tuple[datetime]:
     content = osu.read_file(filepath)
 
     line = content[(i := content.find("Start")):content.find("\n", i)]
-    start, stop = line.split(",")[0:2]
-    start, stop = start[7:-3], stop[7:-3]
+    start, stop = (s[7:-3] for s in line.split(",")[0:2])
+    # start, stop = start[7:-3], stop[7:-3]
 
-    start = datetime.strptime(start, "%Y/%m/%d %H:%M:%S")
-    stop = datetime.strptime(stop, "%Y/%m/%d %H:%M:%S")
+    start_dt = datetime.strptime(start, "%Y/%m/%d %H:%M:%S")
+    stop_dt = datetime.strptime(stop, "%Y/%m/%d %H:%M:%S")
 
-    return start, stop
+    return start_dt, stop_dt
 
 
 
 if __name__ == "__main__":
     filepath = base_path / "outputs/test Contact Analysis.csv"
     contact_plan = contact_analysis_parser(filepath)
+    print(contact_plan)
     start, stop = parse_contact_analysis_time(filepath)
+    # print(f"{start = } | {stop = }")
