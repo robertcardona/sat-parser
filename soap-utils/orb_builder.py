@@ -10,6 +10,7 @@ from datetime import date, datetime
 from itertools import combinations
 from pathlib import Path
 from urllib.request import urlopen
+from typing import NoReturn
 
 from sgp4.api import jday, Satrec
 from sgp4 import exporter, omm
@@ -17,6 +18,7 @@ from sgp4 import exporter, omm
 import pandas as pd
 import numpy as np
 import random
+import os
 
 base_path = Path(__file__).parent.parent
 # print(f"{base_path = }")
@@ -48,7 +50,7 @@ if __name__ == "__main__" and False:
     update_tle_sources("starlink", "csv")
     update_tle_sources("geo", "csv")
 
-def has_duplicate_sources(filepath: str) -> bool:
+def has_duplicate_sources(filepath: str | os.PathLike) -> bool:
     """
     This function checks for duplicate satellite names.
     If duplicates exist, there could be errors in the SOAP output and 
@@ -363,7 +365,7 @@ def create_ground_platform(
 
     return platform
 
-def add_platform(platform: dict) -> str:
+def add_platform(platform: dict) -> str | NoReturn:
     """
     This function loads the values specified by the dictionary `platform` into
         the appropriate template for the type of platform given.
@@ -392,14 +394,14 @@ def add_platform(platform: dict) -> str:
         case 5: # ground
             template = osu.read_file(base_path / "data/templates/platform_ground.orb")
         case _:
-            template = None
+            raise ValueError("`platform` type must be NORAD, CUSTOM or GROUND")
 
     return template.format(**platform)
 
 def get_tle_platforms(
     source: str, 
     fmt: str = "csv",
-    d: datetime | None = None,
+    d: datetime = datetime.now(),
     dist_min: int | None = None,
     dist_max: int | None = None
 ) -> list[dict]:
@@ -449,8 +451,6 @@ def get_tle_platforms(
     else:
         rows = None
 
-    if d == None:
-        d = datetime.now()
     jd, fr = jday(d.year, d.month, d.day, d.hour, d.minute, d.second)
 
     EARTH_RADIUS: int = 6367 # (in km)
@@ -529,7 +529,7 @@ def get_martian_platforms() -> list[dict]:
 
     return platforms
 
-def sample_platforms(platforms: list[dict], k: int | None = None) -> list[dict]:
+def sample_platforms(platforms: list[dict], k: int = -1) -> list[dict]:
     """
     This function returns a random sample of `k` elements from `platforms`.
 
@@ -546,7 +546,7 @@ def sample_platforms(platforms: list[dict], k: int | None = None) -> list[dict]:
     list[dict]
         A list containing `k` random elements from `platforms`.
     """
-    if k == None:
+    if k == -1:
         k = len(platforms)
 
     return random.sample(platforms, k)
@@ -601,10 +601,10 @@ if __name__ == "__main__":
 
     # test ground platform builder : albany
     platform = create_ground_platform(
-        name = "Ground:Albany", 
-        latitude = 42.68501266345616, 
-        longitude = -73.82479012295363, 
-        altitude = 0.0
+        name = "Ground:Albany",
+        latitude = "42.68501266345616",
+        longitude = "-73.82479012295363",
+        altitude = "0.0"
     )
     platform_text = add_platform(platform)
 
@@ -708,7 +708,7 @@ def add_analysis_variable(variable: str, source: str, target: str) -> str:
     return text
 
 def add_contact_analysis(
-    pairs: list[tuple[str]], 
+    pairs: list[tuple[str, str]], 
     step_size: int, 
     name: str, 
     duration: int
@@ -799,8 +799,8 @@ def generate_orb(
     for platform in platforms:
         text += add_transmitter(platform["object_name"]) + "\n"
 
-    pairs = combinations(platforms, 2)
-    pairs = [(pair[0]["object_name"], pair[1]["object_name"]) for pair in pairs]
+    combs = combinations(platforms, 2)
+    pairs = [(pair[0]["object_name"], pair[1]["object_name"]) for pair in combs]
 
     # add links
     for source, target in pairs:

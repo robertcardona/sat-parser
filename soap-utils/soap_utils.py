@@ -5,16 +5,14 @@ import time
 
 from itertools import islice
 
-from typing import List
-
 # logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 def execute_commands(
-        commands: List[str], 
-        hacks: List[str], 
+        commands: list[list[str]], 
+        hacks: list[list[str]], 
         max_workers: int = 10, 
         randomize: bool =False
     ) -> None:
@@ -56,7 +54,7 @@ def execute_commands(
 
     return None
 
-def run_soap_mac(orb_paths: List[str], max_workers: int = 10) -> None:
+def run_soap_mac(orb_paths: list[str], max_workers: int = 10) -> None:
     """
     This function prepares the macOS-specific commands for SOAP to be run 
         and any hacks that are needed to get around soap specific bugs.

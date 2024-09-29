@@ -5,6 +5,7 @@ data needed by other functions.
 """
 
 from os_utils import read_file
+import os
 
 from pathlib import Path
 base_path = Path(__file__).parent.parent
@@ -42,21 +43,21 @@ def parse_norad(split_line: list[str], name: str) -> dict:
     platform = {}
 
     platform["object_name"] = name # ex
-    platform["norad_cat_id"] = float(split_line[1])
-    platform["epoch_year"] = float(split_line[2])
-    platform["epoch_fraction"] = float(split_line[3])
-    platform["mean_motion_dot"] = float(split_line[4])
-    platform["mean_motion_ddot"] = float(split_line[5])
-    platform["bstar"] = float(split_line[6])
-    platform["ephemeris_type"] = float(split_line[7])
-    platform["element_set_no"] = float(split_line[8])
-    platform["inclination"] = float(split_line[9])
-    platform["ra_of_asc_node"] = float(split_line[10])
-    platform["eccentricity"] = float(split_line[11])
-    platform["arg_of_pericenter"] = float(split_line[12])
-    platform["mean_anomaly"] = float(split_line[13])
-    platform["mean_motion"] = float(split_line[14])
-    platform["rev_at_epoch"] = float(split_line[15])
+    platform["norad_cat_id"] = split_line[1]
+    platform["epoch_year"] = split_line[2]
+    platform["epoch_fraction"] = split_line[3]
+    platform["mean_motion_dot"] = split_line[4]
+    platform["mean_motion_ddot"] = split_line[5]
+    platform["bstar"] = split_line[6]
+    platform["ephemeris_type"] = split_line[7]
+    platform["element_set_no"] = split_line[8]
+    platform["inclination"] = split_line[9]
+    platform["ra_of_asc_node"] = split_line[10]
+    platform["eccentricity"] = split_line[11]
+    platform["arg_of_pericenter"] = split_line[12]
+    platform["mean_anomaly"] = split_line[13]
+    platform["mean_motion"] = split_line[14]
+    platform["rev_at_epoch"] = split_line[15]
 
     return platform
 
@@ -68,7 +69,7 @@ if __name__ == "__main__":
     assert len(line.split()) == 16
 
     platform = parse_norad(line.split(), "STARLINK-2708")
-    assert platform ["inclination"] == 53.0531
+    assert platform ["inclination"] == "53.0531"
 
 def parse_custom(split_line: list[str], name: str, system: str) -> dict:
     """
@@ -112,18 +113,18 @@ def parse_custom(split_line: list[str], name: str, system: str) -> dict:
     platform["body"] = split_line[1].strip("\"")
     platform["ic_type"] = split_line[2]
     platform["orbit_type"] = split_line[3]
-    platform["semi_major_axis"] = float(split_line[4])
-    platform["eccentricity"] = float(split_line[5])
-    platform["inclination"] = float(split_line[6])
-    platform["ra_of_asc_node"] = float(split_line[7])
-    platform["arg_of_pericenter"] = float(split_line[8])
-    platform["mean_anomaly"] = float(split_line[9])
-    platform["year"] = float(split_line[10])
-    platform["month"] = float(split_line[11])
-    platform["day"] = float(split_line[12])
-    platform["hour"] = float(split_line[13])
-    platform["minute"] = float(split_line[14])
-    platform["second"] = float(split_line[15])
+    platform["semi_major_axis"] = split_line[4]
+    platform["eccentricity"] = split_line[5]
+    platform["inclination"] = split_line[6]
+    platform["ra_of_asc_node"] = split_line[7]
+    platform["arg_of_pericenter"] = split_line[8]
+    platform["mean_anomaly"] = split_line[9]
+    platform["year"] = split_line[10]
+    platform["month"] = split_line[11]
+    platform["day"] = split_line[12]
+    platform["hour"] = split_line[13]
+    platform["minute"] = split_line[14]
+    platform["second"] = split_line[15]
 
     return platform
 
@@ -136,7 +137,7 @@ if __name__ == "__main__":
     assert len(line.split()) == 16
 
     platform = parse_custom(line.split(), "MarsSat-2", "KEPLER")
-    assert platform ["inclination"] == 45.0
+    assert platform ["inclination"] == "45.0"
 
 def parse_ground(split_line: list[str], body: str, name: str) -> dict:
     """
@@ -172,9 +173,9 @@ def parse_ground(split_line: list[str], body: str, name: str) -> dict:
 
     platform["object_name"] = name
     platform["body"] = body
-    platform["latitude"] = float(split_line[1])
-    platform["longitude"] = float(split_line[2])
-    platform["altitude"] = float(split_line[3])
+    platform["latitude"] = split_line[1]
+    platform["longitude"] = split_line[2]
+    platform["altitude"] = split_line[3]
     
     return platform
 
@@ -184,10 +185,10 @@ if __name__ == "__main__":
     assert len(line.split()) == 4
 
     platform = parse_ground(line.split(), "Earth", "DSN:Madrid")
-    assert platform ["longitude"] == -4.24884720000000016
+    assert platform ["longitude"] == "-4.24884720000000016"
 
 
-def parse_platforms(filepath: str) -> list[dict]:
+def parse_platforms(filepath: str | os.PathLike) -> list[dict]:
     """
     Parses an orb file and extracts all the user-specified platforms.
 
@@ -208,10 +209,10 @@ def parse_platforms(filepath: str) -> list[dict]:
     d = "DEFINE"
 
     # https://stackoverflow.com/questions/7866128/
-    content = [d + e for e in content.split(d) if e]
+    blocks = [d + e for e in content.split(d) if e]
 
     platforms = []
-    for entry in content:
+    for entry in blocks:
         name, system = "", ""
 
         lines = entry.split("\n")
