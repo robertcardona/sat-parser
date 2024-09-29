@@ -22,7 +22,6 @@ base_path = Path(__file__).parent.parent
 # print(f"{base_path = }")
 
 TODAY: date = date.today()
-EARTH_RADIUS: int = 6367 # (in km)
 
 def update_tle_sources(group: str, ext: str) -> None:
     """
@@ -452,8 +451,9 @@ def get_tle_platforms(
 
     if d == None:
         d = datetime.now()
-    
     jd, fr = jday(d.year, d.month, d.day, d.hour, d.minute, d.second)
+
+    EARTH_RADIUS: int = 6367 # (in km)
 
     platforms = []
     for index, platform_df in rows:
