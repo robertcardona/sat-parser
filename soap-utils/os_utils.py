@@ -11,14 +11,14 @@ OSX = 1
 WINDOWS = 2
 
 #Is this thing a file?
-def file_check(filepath: str) -> bool:
+def file_check(filepath: str | os.PathLike) -> bool:
     """
     This functions takes in a filepath and returns True if it is a file and 
         False otherwise.
 
     Parameters
     ----------
-    filepath : str
+    filepath : str | os.PathLike
         A string which contains a path
 
     Returns
@@ -33,13 +33,13 @@ def file_check(filepath: str) -> bool:
         print("Error: Needs a file")
         return False
 
-def read_file(filepath: str) -> str:
+def read_file(filepath: str | os.PathLike) -> str:
     """
     This function opens a file and returns all the data as a string.
 
     Parameters
     ----------
-    filepath : str
+    filepath : str | os.PathLike
         The path to a file as a string
 
     Returns
