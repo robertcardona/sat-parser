@@ -28,8 +28,8 @@ class IntervalMatrix():
         self,
         m: int,
         n: int,
-        array: list[list[P]] | None = None
-        # symmetric: bool = False
+        array: list[list[P.Interval]] | None = None,
+        labels: list[str] | None = None
     ) -> None:
         """
         Parameters
@@ -40,18 +40,18 @@ class IntervalMatrix():
             The number of columns in the matrix
         array : list[list[P]] | None
             A two dimensional m-by-n array of Portion interval objects, or None.
-        symmetric : bool
-            If True, class can assume the matrix is symmetric.
         """
         self.dim_row = m
         self.dim_col = n
-
-        # self.symmetric = symmetric
 
         if array is not None:
             self.array = array
         else:
             self.array = self.empty_array(m, n)
+
+        self.labels = labels
+        if self.labels is not None:
+            assert len(self.labels) == m
 
         if len(self.array) != m:
             error_message = f"`array` should have {m} elements"
@@ -63,35 +63,51 @@ class IntervalMatrix():
 
         return None
 
-    def get_slice_at(self, t: float) -> list[list[int]]:
+    def get_adjacency_matrix_at(self, t: float) -> list[list[int]]:
         array = [[0 for i in range(self.dim_row)] for j in range(self.dim_col)]
         
-        indices = IntervalMatrix.get_indices(self.dim_row, self.dim_col)
-        for i, j in indices:
+        for i, j in IntervalMatrix.get_indices(self.dim_row, self.dim_col):
             if t in self[i, j]:
                 array[i][j] = 1
 
         return array
 
+    def get_window(self, interval: P.Interval) -> "IntervalMatrix":
+        matrix = IntervalMatrix(self.dim_row, self.dim_col)
+
+        for i, j in IntervalMatrix.get_indices(self.dim_row, self.dim_col):
+            matrix[i, j] = self[i, j] & interval
+        
+        return matrix
+
+
     def is_symmetric(self) -> bool:
         if self.dim_row != self.dim_col:
             return False
 
-        #[(i, j) for i in range(m) for j in range(i + 1, n)]
         indices = IntervalMatrix.get_indices(self.dim_row, self.dim_col)
         indices = [(i, j) for (i, j) in indices if i > j]
+
         for i, j in indices:
             if self[i, j] != self[j, i]:
                 return False
 
         return True
 
-    def get_diagonal(self) -> list[P]:
+    def get_diagonal(self) -> list[P.Interval]:
         return [self[i, i] for i in range(min(self.dim_row, self.dim_col))]
     
-    def set_diagonal(self, value: P) -> None:
+    def set_diagonal(self, value: P.Interval) -> None:
         for i in range(min(self.dim_row, self.dim_col)):
             self[i, i] = value
+
+    def get_flattened_array(self) -> list[P.Interval]:
+        array = []
+
+        for i, j in IntervalMatrix.get_indices(self.dim_row, self.dim_col):
+            array.append(self[i, j])
+        
+        return array
 
     def get_dimension(self) -> tuple[int, int]:
         return self.dim_row, self.dim_col
@@ -108,15 +124,19 @@ class IntervalMatrix():
         for i in range(1, k + 1):
             matrices.append(self * matrices[-1])
 
-        # require `__radd__` for this sum to work
+        # require `__radd__` for this sum() to work properly
         return sum(matrices)
+
+    def get_transpose(self) -> "IntervalMatrix":
+        array = [list(row) for row in zip(*(self.array))]
+        return IntervalMatrix(self.dim_row, self.dim_col, array)
 
     @staticmethod
     def get_indices(rows: int, columns: int) -> list[tuple[int, int]]:
         return [(i, j) for i in range(rows) for j in range(columns)]
 
     @staticmethod
-    def empty_array(m: int, n: int) -> list[list[P]]:
+    def empty_array(m: int, n: int) -> list[list[P.Interval]]:
         return [[P.empty() for c in range(n)] for r in range(m)]
 
     @staticmethod
@@ -127,14 +147,14 @@ class IntervalMatrix():
         return matrix
     
     @staticmethod
-    def constant_matrix(m: int, n: int, value: P) -> "IntervalMatrix":
+    def constant_matrix(m: int, n: int, value: P.Interval) -> "IntervalMatrix":
         array = [[value for i in range(n)] for j in range(m)]
         return IntervalMatrix(m, m, array)
 
-    def __getitem__(self, index: tuple[int, int]) -> P:
+    def __getitem__(self, index: tuple[int, int]) -> P.Interval:
         return self.array[index[0]][index[1]]
 
-    def __setitem__(self, index: tuple[int, int], value: P) -> None:
+    def __setitem__(self, index: tuple[int, int], value: P.Interval) -> None:
         self.array[index[0]][index[1]] = value
 
     def __iter__(self) -> Iterator:
@@ -146,9 +166,7 @@ class IntervalMatrix():
         
         matrix = IntervalMatrix(self.dim_row, self.dim_col)
 
-        indices = IntervalMatrix.get_indices(self.dim_row, self.dim_col)
-
-        for i, j in indices:
+        for i, j in IntervalMatrix.get_indices(self.dim_row, self.dim_col):
             matrix[i, j] = self[i, j] | other[i, j]
             
         return matrix
@@ -166,8 +184,7 @@ class IntervalMatrix():
 
         matrix = IntervalMatrix(self.dim_row, other.dim_col)
 
-        indices = IntervalMatrix.get_indices(self.dim_row, other.dim_col)
-        for i, j in indices:
+        for i, j in IntervalMatrix.get_indices(self.dim_row, other.dim_col):
             for k in range(self.dim_col):
                 matrix[i, j] |= (self[i, k] & other[k, j])
 
@@ -190,8 +207,7 @@ class IntervalMatrix():
 
         matrix = IntervalMatrix(self.dim_row, self.dim_col)
 
-        indices = IntervalMatrix.get_indices(self.dim_row, self.dim_col)
-        for i, j in indices:
+        for i, j in IntervalMatrix.get_indices(self.dim_row, self.dim_col):
             matrix[i, j] = self[i, j].apply(interval_shift)
 
         return matrix
@@ -202,8 +218,7 @@ class IntervalMatrix():
 
         matrix = IntervalMatrix(self.dim_row, self.dim_col)
 
-        indices = IntervalMatrix.get_indices(self.dim_row, self.dim_col)
-        for i, j in indices:
+        for i, j in IntervalMatrix.get_indices(self.dim_row, self.dim_col):
             matrix[i, j] = self[i, j].apply(interval_shift)
 
         return matrix
@@ -211,13 +226,20 @@ class IntervalMatrix():
     def __invert__(self) -> "IntervalMatrix":
         matrix = IntervalMatrix(self.dim_row, self.dim_col)
 
-        indices = IntervalMatrix.get_indices(self.dim_row, self.dim_col)
-        for i, j in indices:
+        for i, j in IntervalMatrix.get_indices(self.dim_row, self.dim_col):
             matrix[i, j] = ~self[i, j]
 
         return matrix
 
+    def __contains__(self, other: "IntervalMatrix") -> bool:
+        if self.dim_col != other.dim_col or self.dim_row != other.dim_row:
+            return False
 
+        for i, j in IntervalMatrix.get_indices(self.dim_row, self.dim_col):
+            if other[i, j] not in self[i, j]:
+                return False
+
+        return True
 
     def __eq__(self, other: object) -> bool:
         
@@ -227,8 +249,7 @@ class IntervalMatrix():
         if self.dim_col != other.dim_col or self.dim_row != other.dim_row:
             return False
         
-        indices = IntervalMatrix.get_indices(self.dim_row, self.dim_col)
-        for i, j in indices:
+        for i, j in IntervalMatrix.get_indices(self.dim_row, self.dim_col):
             if self[i, j] != other[i, j]:
                 return False
 
@@ -265,7 +286,7 @@ class IntervalMatrixIterator():
     def __iter__(self) -> Iterator:
         return self
 
-    def __next__(self) -> P:
+    def __next__(self) -> P.Interval:
         dim_row = self.matrix.dim_row
         dim_col = self.matrix.dim_col
 
@@ -283,7 +304,7 @@ class IntervalMatrixIterator():
 
 def matrix_enumerate(
     matrix: IntervalMatrix
-) -> Generator[tuple[tuple[int, int], P], None, None]:
+) -> Generator[tuple[tuple[int, int], P.Interval], None, None]:
 
     dim_row = matrix.dim_row
     dim_col = matrix.dim_col
@@ -378,6 +399,27 @@ if __name__ == "__main__":
     # test ~ operator
     assert matrix_b + ~matrix_b == matrix_const
 
+    # test `get_slice_at`
+    array = matrix.get_adjacency_matrix_at(3)
+    indices = IntervalMatrix.get_indices(4, 4)
+    
+    edges = 0
+    for i, j in indices:
+        edges += array[i][j]
+    
+    assert edges == 8
+
+    # test contains 
+    assert matrix in matrix_b
+    assert matrix_b in matrix_c
+    assert matrix_c not in matrix_b
+    assert matrix_b not in matrix
+
+    # test `get_transpose`
+    matrix_t = matrix.get_transpose()
+    for i, j in indices:
+        assert matrix[i, j] == matrix_t[j, i]
+
     # for (i, j), element in matrix_enumerate(matrix):
     #     print(f"matrix[{i}, {j}] = {element}")
     #     print(f"{i * matrix.dim_col + j}")
@@ -394,4 +436,4 @@ if __name__ == "__main__":
 
     # for i in interval:
         # print(f"{i = }")
-    print(f"{matrix.get_slice_at(3)}")
+    # print(f"{matrix.get_slice_at(3)}")

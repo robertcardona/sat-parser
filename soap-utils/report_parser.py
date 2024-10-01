@@ -195,8 +195,8 @@ def contact_plan_to_matrix(
             rise_time = connections[i]
             set_time = connections[i + 1]
 
-            matrix[(source, target)] |= P.open(rise_time, set_time)
-            matrix[(target, source)] |= P.open(rise_time, set_time)
+            matrix[(source, target)] |= P.closed(rise_time, set_time)
+            matrix[(target, source)] |= P.closed(rise_time, set_time)
 
     return matrix
 
