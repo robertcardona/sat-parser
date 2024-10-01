@@ -14,7 +14,7 @@ def execute_commands(
         commands: list[list[str]], 
         hacks: list[list[str]], 
         max_workers: int = 10, 
-        randomize: bool =False
+        randomize: bool = False
     ) -> None:
     """
     This function runs all the terminal commands specified in `commands` on
@@ -121,4 +121,7 @@ def run_soap_windows() -> None:
     return None
 
 if __name__ == "__main__":
+    cmd = ["echo"]
+    process = subprocess.Popen(cmd)
+    print(f"{process.args = }")
     pass

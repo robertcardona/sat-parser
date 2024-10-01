@@ -134,7 +134,7 @@ def contact_analysis_parser(
         contacts = contact_analysis_parser_v15(content)
 
     nodes: dict[str, int] = {}
-    edges: dict[tuple[int, int], list[float]]  ={}
+    edges: dict[tuple[int, int], list[float]] = {}
     node_counter = 0
 
     for contact in contacts:
@@ -183,7 +183,7 @@ def contact_plan_to_matrix(
 ) -> IntervalMatrix:
 
     n = len(nodes)
-    matrix = IntervalMatrix(n, n)
+    matrix = IntervalMatrix(n, n, labels = sorted(nodes, key=nodes.__getitem__))
     
     for i in range(n):
         matrix[(n, n)] = P.open(-P.inf, P.inf)
@@ -199,6 +199,13 @@ def contact_plan_to_matrix(
             matrix[(target, source)] |= P.closed(rise_time, set_time)
 
     return matrix
+
+def extract_critical_times(
+    edges: dict[tuple[int, int], list[float]]
+) -> list[float]:
+    logger.info("Running `extract_critical_times`")
+
+    return sorted(list(set(sum([c for _, c in edges.items()], []))))
 
 def parse_contact_analysis_time(
     filepath: str | os.PathLike
@@ -236,6 +243,6 @@ def parse_contact_analysis_time(
 if __name__ == "__main__":
     filepath = base_path / "outputs/test Contact Analysis.csv"
     contact_plan = contact_analysis_parser(filepath)
-    print(contact_plan)
+    # print(contact_plan)
     start, stop = parse_contact_analysis_time(filepath)
     # print(f"{start = } | {stop = }")

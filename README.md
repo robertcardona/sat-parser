@@ -10,6 +10,19 @@ to generate `.csv` reports as specified in the `.orb` files.
 
 ## Usage
 
+
+### Compatible OSes
+
+We tested the interactions between `soap_utils` and SOAP on MacOS Sonoma and 
+MacOS Sequoia using SOAP 15.5.0.
+
+TODO:
+
+ - [ ] Windows 11 (running as arm in UTM on ARM M2)
+ - [ ] Windows 11 (running as x64 in UTM on ARM M2)
+ - [ ] Ubuntu 22.0 (running as x64 in UTM on ARM M2)
+ - [ ] Ubuntu 22.0 ()
+
 ## Contributing
 
 You may need to make addotopms pr modifications to 
@@ -42,6 +55,9 @@ carefully. If this happens, `generate_orb` might need to be rewritten to handle
 this. One way to see this is to generate the file as is, open it in SOAP, make 
 a small modification, then revert it, then save the file. SOAP will rearrange
 the entire file into the way it natively arranges it.
+
+### Type Checking
+Run `mypy --ignore-missing-imports ./soap-utils/` before committing.
 
 ## Contributors
 

@@ -437,3 +437,22 @@ if __name__ == "__main__":
     # for i in interval:
         # print(f"{i = }")
     # print(f"{matrix.get_slice_at(3)}")
+
+    # nodes = {"B" : 1, "C" : 2, "A" : 0}
+    # print(sorted(nodes, key=nodes.__getitem__))
+    # print(f"{list(nodes.keys())}")
+
+#     e = {(0, 1) : [0.0, 1.0, 2.0, 3.0, 4.0, 5.0], (0, 2) : [], (1, 2) : [4.0, 7.0]}
+
+#     times = sorted(list(set(sum([c for _, c in e.items()], []))))
+#     # print(times)
+
+# def extract_critical_times(
+#     edges: dict[tuple[int, int], list[float]]
+# ) -> list[float]:
+
+#     # times = 
+#     return sorted(list(set(sum([c for _, c in edges.items()], []))))
+
+# times = extract_critical_times(e)
+# print(f"{times = }")
