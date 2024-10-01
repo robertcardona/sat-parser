@@ -8,6 +8,15 @@ to generate `.csv` reports as specified in the `.orb` files.
 
 ## Installation
 
+Create a new conda environment with 
+`conda create --name soap python=3.10 numpy pandas pip conda-forge::mypy`
+
+Enter into the new environment with `conda activate soap`
+
+Install the following pip packages : `pip install sgp4 portion`
+
+
+
 ## Usage
 
 
@@ -18,10 +27,8 @@ MacOS Sequoia using SOAP 15.5.0.
 
 TODO:
 
- - [ ] Windows 11 (running as arm in UTM on ARM M2)
- - [ ] Windows 11 (running as x64 in UTM on ARM M2)
- - [ ] Ubuntu 22.0 (running as x64 in UTM on ARM M2)
- - [ ] Ubuntu 22.0 ()
+ - [ ] Windows 11 (running in UTM on ARM M2)
+ - [ ] Ubuntu 22.04 (running in UTM on ARM M2)
 
 ## Contributing
 
