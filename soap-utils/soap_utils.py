@@ -1,9 +1,14 @@
+import os_utils as osu
+
 import logging
 import subprocess
 import random
 import time
 
 from itertools import islice
+from pathlib import Path
+
+base_path = Path(__file__).parent.parent
 
 # logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
@@ -14,7 +19,8 @@ def execute_commands(
         commands: list[list[str]], 
         hacks: list[list[str]], 
         max_workers: int = 10, 
-        randomize: bool = False
+        randomize: bool = False,
+        shell: bool = False
     ) -> None:
     """
     This function runs all the terminal commands specified in `commands` on
@@ -36,7 +42,7 @@ def execute_commands(
     if randomize:
         random.shuffle(commands)
 
-    processes = (subprocess.Popen(cmd) for cmd in commands)
+    processes = (subprocess.Popen(cmd, shell=shell) for cmd in commands)
     running_processes = list(islice(processes, max_workers))  # start new processes
 
     while running_processes:
@@ -113,15 +119,22 @@ def run_soap_linux() -> None:
 
     return None
 
-def run_soap_windows() -> None:
+def run_soap_windows(orb_paths: list[str], max_workers: int = 10) -> None:
     """
     This function prepares the Windows-specific commands for SOAP to be run.
     """
 
+    commands = [["C:\\soap15\\bin64\\soap.exe", path] for path in orb_paths]
+
+    execute_commands(commands, [], max_workers, shell = True)
+
     return None
 
 if __name__ == "__main__":
+    # filepaths = osu.get_ext_files(base_path / "outputs/", "orb")
+    # print(filepaths)
+    # run_soap_mac(filepaths)
     cmd = ["echo"]
-    process = subprocess.Popen(cmd)
-    print(f"{process.args = }")
-    pass
+    process = subprocess.Popen(cmd, shell=True)
+    # print(f"{process.args = }")
+    # pass
