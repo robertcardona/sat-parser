@@ -100,7 +100,7 @@ def get_csv_files(folder : str) -> list[str]:
             filepaths.append(f)
     return filepaths
 
-def get_ext_files(folder: str, ext: str) -> list[str]:
+def get_ext_files(folder:  str | os.PathLike, ext: str) -> list[str]:
     """
     Returns a list of all files in a given folder with given extension.
         `get_ext_files("./outputs/", "tle")`

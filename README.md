@@ -23,11 +23,10 @@ Install the following pip packages : `pip install sgp4 portion`
 ### Compatible OSes
 
 We tested the interactions between `soap_utils` and SOAP on MacOS Sonoma and 
-MacOS Sequoia using SOAP 15.5.0.
+MacOS Sequoia using SOAP 15.5.0, and on Windows 11 using SOAP 15.6.1.
 
 TODO:
 
- - [ ] Windows 11 (running in UTM on ARM M2)
  - [ ] Ubuntu 22.04 (running in UTM on ARM M2)
 
 ## Contributing

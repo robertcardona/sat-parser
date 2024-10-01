@@ -42,14 +42,18 @@ def execute_commands(
     if randomize:
         random.shuffle(commands)
 
+    # `echo` command signals all commands have executed
+    commands.append(["echo"])
+
     processes = (subprocess.Popen(cmd, shell=shell) for cmd in commands)
     running_processes = list(islice(processes, max_workers))  # start new processes
 
     while running_processes:
         for i, process in enumerate(running_processes):
             if process.poll() is not None:  # the process has finished
-                running_processes[i] = next(processes, None)  # start new process
-                if running_processes[i] is None: # no new processes
+                running_processes[i] = next(processes)  # start new process
+                assert isinstance((args := running_processes[i].args), list)
+                if len(args) > 1: # no new processes
                     del running_processes[i]
                     break
             else:
@@ -131,10 +135,10 @@ def run_soap_windows(orb_paths: list[str], max_workers: int = 10) -> None:
     return None
 
 if __name__ == "__main__":
-    # filepaths = osu.get_ext_files(base_path / "outputs/", "orb")
+    filepaths = osu.get_ext_files(base_path / "outputs/", "orb")
     # print(filepaths)
-    # run_soap_mac(filepaths)
-    cmd = ["echo"]
-    process = subprocess.Popen(cmd, shell=True)
+    run_soap_mac(filepaths)
+    # cmd = ["echo"]
+    # process = subprocess.Popen(cmd, shell=True)
     # print(f"{process.args = }")
     # pass
