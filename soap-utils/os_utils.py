@@ -3,13 +3,6 @@
 
 import os
 
-from sys import platform
-
-ERROR = -1
-LINUX = 0
-OSX = 1
-WINDOWS = 2
-
 #Is this thing a file?
 def file_check(filepath: str | os.PathLike) -> bool:
     """
@@ -52,29 +45,6 @@ def read_file(filepath: str | os.PathLike) -> str:
         data = f.read()
     return data
 
-def check_os() -> int:
-    """
-    This function checks what the operating system is.
-
-    Returns
-    -------
-    int
-        LINUX, OSX, WINDOWS = 0, 1, 2
-    """
-    if platform == "linux" or platform == "linux2":
-        return LINUX
-        # linux
-    elif platform == "darwin":
-        return OSX
-        # OS X
-    elif platform == "win32":
-        return WINDOWS
-        # Windows...
-
-    return ERROR
-
-if __name__ == "__main__":
-    assert(check_os() == OSX)
 
 def get_csv_files(folder : str) -> list[str]:
     """"
