@@ -5,9 +5,17 @@ data needed by other functions.
 """
 
 from os_utils import read_file
-import os
 
 from pathlib import Path
+
+import os
+import logging
+
+logger = logging.getLogger("orb_parser")
+level = logging.WARNING
+logger.setLevel(level)
+logging.basicConfig(level=level)
+
 base_path = Path(__file__).parent.parent
 
 def parse_norad(split_line: list[str], name: str) -> dict:

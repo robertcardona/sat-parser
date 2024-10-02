@@ -19,9 +19,9 @@ import os
 import logging
 
 logger = logging.getLogger("report_parser")
-logger.setLevel(logging.WARNING)
-# logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.WARN)
+level = logging.WARNING
+logger.setLevel(level)
+logging.basicConfig(level=level)
 
 base_path = Path(__file__).parent.parent
 
@@ -238,11 +238,11 @@ def parse_contact_analysis_time(
 
     return start_dt, stop_dt
 
-
-
 if __name__ == "__main__":
-    filepath = base_path / "outputs/test Contact Analysis.csv"
-    contact_plan = contact_analysis_parser(filepath)
+    filepath = base_path / "outputs/test_100_0 Contact Analysis.csv"
+    nodes, edges = contact_analysis_parser(filepath)
+    print(f"There are {len(nodes)} sats")
+
     # print(contact_plan)
     start, stop = parse_contact_analysis_time(filepath)
     # print(f"{start = } | {stop = }")

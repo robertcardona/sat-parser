@@ -1,20 +1,21 @@
 import os_utils as osu
 
-import logging
-import subprocess
-import random
-import time
-
 from itertools import islice
 from pathlib import Path
+from typing import Generator
+
+import logging
 import platform
+import random
+import subprocess
+import time
+
+logger = logging.getLogger("report_parser")
+level = logging.WARNING
+logger.setLevel(level)
+logging.basicConfig(level=level)
 
 base_path = Path(__file__).parent.parent
-
-# logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 def execute_commands(
         commands: list[list[str]], 
@@ -40,18 +41,15 @@ def execute_commands(
     if randomize:
         random.shuffle(commands)
 
-    # `echo` command signals all commands have executed
-    # commands.append(["echo"])
-
-    processes = (subprocess.Popen(cmd, shell=shell) for cmd in commands)
+    processes: Generator[subprocess.Popen[bytes] | None, None, None] = \
+        (subprocess.Popen(cmd, shell=shell) for cmd in commands)
     running_processes = list(islice(processes, max_workers))  # start new processes
 
     while running_processes:
         for i, process in enumerate(running_processes):
+            assert process is not None
             if process.poll() is not None:  # the process has finished
                 running_processes[i] = next(processes, None)  # start new process
-                # assert isinstance((args := running_processes[i].args), list)
-                # if len(args) > 1: # no new processes
                 if running_processes[i] is None:
                     del running_processes[i]
                     break

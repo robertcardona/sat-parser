@@ -19,6 +19,12 @@ import pandas as pd
 import numpy as np
 import random
 import os
+import logging
+
+logger = logging.getLogger("orb_builder")
+level = logging.WARNING
+logger.setLevel(level)
+logging.basicConfig(level=level)
 
 base_path = Path(__file__).parent.parent
 # print(f"{base_path = }")
@@ -821,8 +827,11 @@ def generate_orb(
     return text
 
 platforms = get_tle_platforms("starlink", dist_min = 200, dist_max = 800)
-platforms = sample_platforms(platforms, 20)
-text = generate_orb(platforms, "test", TODAY)
-# text = generate_orb([], "test", TODAY)
-with open(base_path / "outputs/test.orb", "w") as f:
-    f.write(text)
+
+m = 20
+for k in range(30):
+    platforms = sample_platforms(platforms, m)
+    text = generate_orb(platforms, f"test_{m}_{k}", TODAY)
+    # text = generate_orb([], "test", TODAY)
+    with open(base_path / f"outputs/test_{m}_{k}.orb", "w") as f:
+        f.write(text)

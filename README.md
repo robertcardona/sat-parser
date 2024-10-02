@@ -15,7 +15,9 @@ Enter into the new environment with `conda activate soap`
 
 Install the following pip packages : `pip install sgp4 portion`
 
-
+Pattern matching is used so we require `python=3.10`. 
+Replacing that code would then only require `python=3.8` if necessary. 
+Run the pip package `vermin` on the files for details.
 
 ## Usage
 
