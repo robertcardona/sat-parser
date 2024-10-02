@@ -7,6 +7,7 @@ import time
 
 from itertools import islice
 from pathlib import Path
+import platform
 
 base_path = Path(__file__).parent.parent
 
@@ -17,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 def execute_commands(
         commands: list[list[str]], 
-        hacks: list[list[str]], 
         max_workers: int = 10, 
         randomize: bool = False,
         shell: bool = False
@@ -30,20 +30,18 @@ def execute_commands(
     ----------
     commands : List[str]
         A list of valid MacOS unix commands
-    hacks : List[str]
-        A list of MacOS unix commands to be run after each main command completes
     max_workers : int, optional
         The number of threads to be created to run the jobs
     randomize : bool, optional
         Specifies if the commands should be randomized
     """
-    logger.info(f"Running `execute_commands` with {len(commands)} commands and {len(hacks)} hacks.")
+    logger.info(f"Running `execute_commands` with {len(commands)} commands.")
 
     if randomize:
         random.shuffle(commands)
 
     # `echo` command signals all commands have executed
-    commands.append(["echo"])
+    # commands.append(["echo"])
 
     processes = (subprocess.Popen(cmd, shell=shell) for cmd in commands)
     running_processes = list(islice(processes, max_workers))  # start new processes
@@ -51,17 +49,14 @@ def execute_commands(
     while running_processes:
         for i, process in enumerate(running_processes):
             if process.poll() is not None:  # the process has finished
-                running_processes[i] = next(processes)  # start new process
-                assert isinstance((args := running_processes[i].args), list)
-                if len(args) > 1: # no new processes
+                running_processes[i] = next(processes, None)  # start new process
+                # assert isinstance((args := running_processes[i].args), list)
+                # if len(args) > 1: # no new processes
+                if running_processes[i] is None:
                     del running_processes[i]
                     break
             else:
                 time.sleep(0.5)
-
-                for hack in hacks:
-                    subprocess.run(hack)        
-
     return None
 
 def run_soap_mac(orb_paths: list[str], max_workers: int = 10) -> None:
@@ -79,47 +74,21 @@ def run_soap_mac(orb_paths: list[str], max_workers: int = 10) -> None:
     """
     logger.info(f"Running `run_soap_mac` with {len(orb_paths)} simulations on {max_workers} threads.")
 
-    osascript_unfocus = [
-        'osascript',
-        '-e',
-        'tell application "System Events"',
-        '-e',
-        'set visible of application process "SOAP" to false',
-        '-e',
-        'end tell'
-    ]
+    soap_path = "/Applications/SOAP/SOAP 15.5.0/SOAP.app/Contents/MacOS/SOAP"
+    commands = [[soap_path, path, "-nogui"] for path in orb_paths]
 
-    osascript_focus = [
-        'osascript',
-        '-e',
-        'tell application "System Events"',
-        '-e',
-        'tell process "SOAP"',
-        '-e',
-        'set frontmost to true',
-        '-e',
-        'end tell',
-        '-e',
-        'end tell'
-    ]
-
-    commands = []
-    for path in orb_paths:
-        # args = ["open", "-n", "-W", f"{folder}/{filename}"]
-        args = ["open", "-n", "-j", "-W", path]
-        commands.append(args)
-
-    # print(f"len(commands)={len(commands)}")
-
-    hacks = [osascript_unfocus, osascript_focus]
-    execute_commands(commands, hacks, max_workers)
+    execute_commands(commands, max_workers)
     
     return None
 
-def run_soap_linux() -> None:
+def run_soap_linux(orb_paths: list[str], max_workers: int = 10) -> None:
     """
     This function prepares the Linux/GNU-specific commands for SOAP to be run.
     """
+
+    commands = [["soap", "-nogui", path] for path in orb_paths]
+
+    execute_commands(commands, max_workers, shell = True)
 
     return None
 
@@ -128,16 +97,34 @@ def run_soap_windows(orb_paths: list[str], max_workers: int = 10) -> None:
     This function prepares the Windows-specific commands for SOAP to be run.
     """
 
-    commands = [["C:\\soap15\\bin64\\soap.exe", path] for path in orb_paths]
+    soap_path = "C:\\soap15\\bin64\\soap.exe"
+    commands = [[soap_path, "-nogui", path] for path in orb_paths]
 
-    execute_commands(commands, [], max_workers, shell = True)
+    execute_commands(commands, max_workers, shell = True)
 
+    return None
+
+def run_soap(orb_paths: list[str], max_workers: int = 10) -> None:
+
+    system = platform.system()
+
+    match system:
+        case "Linux":
+            run_soap_linux(orb_paths, max_workers)
+        case "Darwin":
+            run_soap_mac(orb_paths, max_workers)
+        case "Windows":
+            run_soap_windows(orb_paths, max_workers)
+        case _:
+            raise OSError(f"Unsupported OS ({system})")
     return None
 
 if __name__ == "__main__":
     filepaths = osu.get_ext_files(base_path / "outputs/", "orb")
+    # print(f"{osu.check_os()}")
     # print(filepaths)
-    run_soap_mac(filepaths)
+    # run_soap_mac(filepaths)
+    run_soap(filepaths)
     # cmd = ["echo"]
     # process = subprocess.Popen(cmd, shell=True)
     # print(f"{process.args = }")
