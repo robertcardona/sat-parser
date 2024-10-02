@@ -5,7 +5,7 @@ This handles matrices with interval objects as entries.
 """
 
 # https://stackoverflow.com/questions/33533148/
-from typing import Generator, Iterator, Literal, NoReturn
+from typing import Generator, Iterator, Literal
 
 import portion as P
 
@@ -80,6 +80,23 @@ class IntervalMatrix():
         
         return matrix
 
+    def connected(self, i: int, j: int) -> P.Interval:
+        return self[i, j]
+
+    def connected_at(self, i: int, j: int, t: float) -> bool:
+        return t in self[i, j]
+
+    def get_label(self, i: int) -> str:
+        if self.labels is not None:
+            return self.labels[i]
+        else:
+            raise ValueError(f"There is no label associated to index {i}")
+
+    def get_index(self, label: str) -> int:
+        if self.labels is not None:
+            return self.labels.index(label)
+        else:
+            raise ValueError(f"Labels were not been defined")
 
     def is_symmetric(self) -> bool:
         if self.dim_row != self.dim_col:
