@@ -57,7 +57,11 @@ def execute_commands(
                 time.sleep(0.5)
     return None
 
-def run_soap_mac(orb_paths: list[str], max_workers: int = 10) -> None:
+def run_soap_mac(
+    orb_paths: list[str],
+    max_workers: int = 10,
+    soap_path: str | None = None
+) -> None:
     """
     This function prepares the macOS-specific commands for SOAP to be run 
         and any hacks that are needed to get around soap specific bugs.
@@ -72,47 +76,62 @@ def run_soap_mac(orb_paths: list[str], max_workers: int = 10) -> None:
     """
     logger.info(f"Running `run_soap_mac` with {len(orb_paths)} simulations on {max_workers} threads.")
 
-    soap_path = "/Applications/SOAP/SOAP 15.5.0/SOAP.app/Contents/MacOS/SOAP"
+    if soap_path is None:
+        soap_path = "/Applications/SOAP/SOAP 15.5.0/SOAP.app/Contents/MacOS/SOAP"
     commands = [[soap_path, path, "-nogui"] for path in orb_paths]
 
     execute_commands(commands, max_workers)
     
     return None
 
-def run_soap_linux(orb_paths: list[str], max_workers: int = 10) -> None:
+def run_soap_linux(
+    orb_paths: list[str], 
+    max_workers: int = 10,
+    soap_path: str | None = None
+) -> None:
     """
     This function prepares the Linux/GNU-specific commands for SOAP to be run.
     """
 
-    commands = [["soap", "-nogui", path] for path in orb_paths]
-
-    execute_commands(commands, max_workers, shell = True)
-
-    return None
-
-def run_soap_windows(orb_paths: list[str], max_workers: int = 10) -> None:
-    """
-    This function prepares the Windows-specific commands for SOAP to be run.
-    """
-
-    soap_path = "C:\\soap15\\bin64\\soap.exe"
+    if soap_path is None:
+        soap_path = "soap"
     commands = [[soap_path, "-nogui", path] for path in orb_paths]
 
     execute_commands(commands, max_workers, shell = True)
 
     return None
 
-def run_soap(orb_paths: list[str], max_workers: int = 10) -> None:
+def run_soap_windows(
+    orb_paths: list[str], 
+    max_workers: int = 10,
+    soap_path: str | None = None
+) -> None:
+    """
+    This function prepares the Windows-specific commands for SOAP to be run.
+    """
+    if soap_path is None:
+        soap_path = "C:\\soap15\\bin64\\soap.exe"
+    commands = [[soap_path, "-nogui", path] for path in orb_paths]
+
+    execute_commands(commands, max_workers, shell = True)
+
+    return None
+
+def run_soap(
+    orb_paths: list[str], 
+    max_workers: int = 10,
+    soap_path: str | None = None
+) -> None:
 
     system = platform.system()
 
     match system:
         case "Linux":
-            run_soap_linux(orb_paths, max_workers)
+            run_soap_linux(orb_paths, max_workers, soap_path)
         case "Darwin":
-            run_soap_mac(orb_paths, max_workers)
+            run_soap_mac(orb_paths, max_workers, soap_path)
         case "Windows":
-            run_soap_windows(orb_paths, max_workers)
+            run_soap_windows(orb_paths, max_workers, soap_path)
         case _:
             raise OSError(f"Unsupported OS ({system})")
     return None
