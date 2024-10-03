@@ -9,7 +9,7 @@ to generate `.csv` reports as specified in the `.orb` files.
 ## Installation
 
 Create a new conda environment with 
-`conda create --name soap python=3.10 numpy pandas pip conda-forge::mypy`
+`conda create --name soap python=3.10 numpy pandas pip`
 
 Enter into the new environment with `conda activate soap`
 
@@ -20,7 +20,6 @@ Replacing that code would then only require `python=3.8` if necessary.
 Run the pip package `vermin` on the files for details.
 
 ## Usage
-
 
 ### Compatible OSes
 
@@ -33,7 +32,7 @@ TODO:
 
 ## Contributing
 
-You may need to make addotopms pr modifications to 
+You may need to make additions or modifications to 
 `orb_builder` and `report_parser`. 
 If SOAP updates to a version that can no longer read the `.orb` files generated
 by `orb_builder` or they modify the structure of the generated reports, 
@@ -65,6 +64,9 @@ a small modification, then revert it, then save the file. SOAP will rearrange
 the entire file into the way it natively arranges it.
 
 ### Type Checking
+Make sure your conda environment has `mypy`. 
+Run `conda install conda-forge::mypy`.
+
 Run `mypy --ignore-missing-imports ./soap-utils/` before committing.
 
 ## Contributors
