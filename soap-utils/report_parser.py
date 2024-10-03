@@ -61,6 +61,8 @@ def contact_analysis_parser_v15(content: str) -> list[dict]:
     # special case ()
     content = content.replace(" sees ", " - ")
 
+    content = content.replace("\nContact ", "\n")
+
     content = content.split("Analysis,")[1]
     lines = content.split("\n")[2:-1]
 
@@ -91,7 +93,7 @@ def contact_analysis_parser_v15(content: str) -> list[dict]:
     return contacts
 
 # TODO : check if filepath is str type or path
-def contact_analysis_parser(
+def contact_analysis_report_parser(
     filepath: str | os.PathLike, 
     delta: int = 1
 ) -> tuple[dict[str, int], dict[tuple[int, int], list[float]]]:
@@ -121,7 +123,7 @@ def contact_analysis_parser(
             ordered from least to greatest id, and the keys are a list of 
             rise-set times.
     """
-    logger.info(f"Running `contact_analysis_parser` on `{filepath}`")
+    logger.info(f"Running `contact_analysis_report_parser` on `{filepath}`")
 
     content = osu.read_file(filepath)
 
@@ -238,11 +240,87 @@ def parse_contact_analysis_time(
 
     return start_dt, stop_dt
 
-if __name__ == "__main__":
-    filepath = base_path / "outputs/test_100_0 Contact Analysis.csv"
-    nodes, edges = contact_analysis_parser(filepath)
-    print(f"There are {len(nodes)} sats")
+def distances_report_parser(filepath: str | os.PathLike) -> dict[str, list[float]]:
+    logger.info(f"Running `distances_report_parser` on `{filepath}`")
 
+    content = osu.read_file(filepath)
+
+    # special cases
+    content = content.replace("Dist ", "Distance ")
+    content = content.replace(" to ", " - ")
+    content = content.replace(" sees ", " - ")
+    content = content.replace("km\n", "km,\n")
+
+    line = content[(i := content.find("TIME_UNITS")):content.find("\n", i)]
+    line = line.replace("Distance ", "")
+    labels = line.split(",")[:-1]
+    # print(labels)
+
+    lines = content[content.find("SECONDS"):].split("\n")[1:-1]
+    # print(lines)
+
+    distances: dict[str, list[float]] = {}
+    for line in lines:
+        for index, column in enumerate(line.split(",")[:-1]):
+            # print(f"{labels[index]} : {index = } : {column = }")
+            distances.setdefault(labels[index], []).append(float(column))
+    # for key, value in distances.items():
+    #     print(f"distances[{key}] = {value} : len(value) = {len(value)}")
+        # print(86_400 // 24)
+    return distances
+
+def coordinates_report_parser(filepath: str | os.PathLike) -> dict[str, list[float | list[float]]]:
+    logger.info(f"Running `coordinates_report_parser` on `{filepath}`")
+
+    content = osu.read_file(filepath)
+
+    line = content[(i := content.find("TIME_UNITS")):content.find("\n", i)]
+    # line = line.replace("Distance ", "")
+    labels = line.split(",")[:-1]
+
+    lines = content[content.find("SECONDS"):].split("\n")[1:-1]
+
+    INF = float("inf")
+    axes: dict[str, int] = {"X-Coordinate" : 0, "Y-Coordinate" : 1, "Z-Coordinate" : 2}
+    coordinates: dict[str, list[float | list[float]]] = {}
+    
+    for line in lines:
+        columns = line.split(",")
+
+        step: dict[str, list[float]] = {}
+        for index, column in enumerate(columns[1:-1]):
+            # print(f"{labels[index]} : {index = } : {column = }")
+            key, axis = labels[index + 1].split(" - ")
+            j = axes[axis]
+            step.setdefault(key, [INF, INF, INF])[j] = float(column)
+
+        coordinates.setdefault(labels[0], []).append(float(columns[0]))
+        for key, value in step.items():
+            coordinates.setdefault(key, []).append(value)
+
+    return coordinates
+
+def approximate_distance(
+    distances: dict[str, list[float]], 
+    link: str, 
+    t: float
+) -> float:
+
+    return 0.0
+
+if __name__ == "__main__":
+    filepath = base_path / "outputs/test_20_0 Contact Analysis.csv"
+    nodes, edges = contact_analysis_report_parser(filepath)
+    print(f"There are {len(nodes)} sats")
     # print(contact_plan)
     start, stop = parse_contact_analysis_time(filepath)
     # print(f"{start = } | {stop = }")
+    filepath = base_path / "outputs/test_20_0 Distances.csv"
+    distances = distances_report_parser(filepath)
+
+    filepath = base_path / "outputs/test_20_0 Coordinates.csv"
+    coordinates = coordinates_report_parser(filepath)
+
+    print(coordinates["TIME_UNITS"])
+    for key, value in coordinates.items():
+        print(f"{key} : {value[0:2]}")
