@@ -19,6 +19,10 @@ Pattern matching is used so we require `python=3.10`.
 Replacing that code would then only require `python=3.8` if necessary. 
 Run the pip package `vermin` on the files for details.
 
+To install this as an editable pip package, run `pip install -e ./` in the 
+repo folder.
+Or run `pip install pip@git+https://github.com/robertcardona/soap-utils`.
+
 ## Usage
 
 ### Compatible OSes

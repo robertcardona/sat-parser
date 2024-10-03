@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "soap-utils"
+version = "0.0.1"
+authors = [
+    { name = "Robert Cardona", email = "rlcardona@albany.edu" },
+]
+description = "Utilities for generating and parsing reports with SOAP"
+readme = "README.md"
+requires-python=">=3.10"
+dependencies = [
+    "numpy", 
+    "pandas", 
+    "pip",
+    "sgp4",
+    "portion"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.optional-dependencies]
+dev = [
+    "mypy", 
+    "vermin"
+]
+
+[project.urls]
+Github = "https://github.com/robertcardona/soap-utils"
