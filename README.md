@@ -21,7 +21,7 @@ Run the pip package `vermin` on the files for details.
 
 To install this as an editable pip package, run `pip install -e ./` in the 
 repo folder.
-Or run `pip install pip@git+https://github.com/robertcardona/soap-utils`.
+Or run `pip install git+https://github.com/robertcardona/soap-utils`.
 
 ## Usage
 
