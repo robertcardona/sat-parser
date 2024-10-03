@@ -1,5 +1,5 @@
-DEFINE ANALYSIS  "{a} - {b}"
-  VARIABLE {variable}  "{a} - {b}"
+DEFINE ANALYSIS  "{name}"
+  VARIABLE {vtype}  {variables}
   BOUNDS {lower} {upper}
 	COLOR Red
   MARKER  "*"

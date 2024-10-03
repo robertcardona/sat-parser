@@ -7,7 +7,7 @@ import orb_parser as op
 import os_utils as osu
 
 from datetime import date, datetime
-from itertools import combinations
+from itertools import combinations, product
 from pathlib import Path
 from urllib.request import urlopen
 from typing import NoReturn
@@ -46,6 +46,8 @@ def update_tle_sources(group: str, ext: str) -> None:
         This specifies the extension the data should be in.
             Namely `tle` or `csv`.
     """
+    logger.info(f"Updating TLE sources file : ./data/{ext}/{group}.{ext}")
+
     celestrak = f"https://celestrak.org/NORAD/elements/gp.php?GROUP={group}&FORMAT={ext}"
     data = urlopen(celestrak).read().decode('utf-8')
     with open(base_path / "data" / ext / f"{group}.{ext}", "w") as f:
@@ -617,7 +619,7 @@ if __name__ == "__main__":
     assert len(platform_text.split()) == 22
     assert "Albany" in platform_text
 
-def add_link(source: str, target: str, name: str | None = None) -> str:
+def add_link(source: str, target: str, fmt: str) -> str:
     """
     This function returns the text of a link object for a SOAP orb file.
 
@@ -635,8 +637,9 @@ def add_link(source: str, target: str, name: str | None = None) -> str:
     str
         The text of a link object for an orb file.
     """
-    if name == None:
-        name = f"Link {source} - {target}"
+    # if name == None:
+        # name = f"Link {source} - {target}"
+    name = fmt.format(s = source, t = target)
 
     template = osu.read_file(base_path / "data/templates/link.orb")
     text = template.format(
@@ -683,14 +686,21 @@ def add_receivers(source: str, target: str) -> str:
     template = osu.read_file(base_path / "data/templates/receiver.orb")
     return template.format(a = source, b = target)
 
-def add_analysis_variable(variable: str, source: str, target: str) -> str:
+def add_analysis_variable(
+    name: str, 
+    vtype: str,
+    variables: list[str], 
+    lower: float,
+    upper: float
+) -> str:
     """
     This function returns an analysis variable object between two platforms.
 
     Parameters
     ----------
     variable : str
-        This is a valid SOAP analysis variable, e.g., `RX_TPOWER`.
+        This is a valid SOAP analysis variable, 
+            e.g., `RX_TPOWER`, "RANGE_MAGNITUDE".
     source : str
         This is the internal label for the source.
     target : str
@@ -704,18 +714,18 @@ def add_analysis_variable(variable: str, source: str, target: str) -> str:
     template = osu.read_file(base_path / "data/templates/analysis_variable.orb")
 
     text = template.format(
-        a = source,
-        b = target,
-        variable = variable,
-        lower = -998,
-        upper = 30
+        name = name,
+        vtype = vtype,
+        variables = " ".join(f'"{v}"' for v in variables),
+        lower = lower,
+        upper = upper
     )
 
     return text
 
-def add_contact_analysis(
+def add_contact_analysis_view(
     pairs: list[tuple[str, str]], 
-    step_size: int, 
+    fmt: str,
     name: str, 
     duration: int
 ) -> str:
@@ -744,14 +754,61 @@ def add_contact_analysis(
     """
     template = osu.read_file(base_path / "data/templates/analysis_report.orb")
 
-    variables = [f'\t"{source} - {target}"\n' for (source, target) in pairs]
-    # print(pairs)
+    variables = [f'\t"{fmt.format(s = s, t = t)}"\n' for (s, t) in pairs]
 
     text = template.format(
-        variables = "".join(variables),
-        step_size = step_size,
+        variables_step = "\n",
+        variables_riseset = "".join(variables),
         name = name,
-        duration = duration
+        duration = duration,
+        step_size = 3_600,
+        trpt = "RISE_SET"
+    )
+
+    return text
+
+def add_distances_view(
+    pairs: list[tuple[str, str]], 
+    fmt: str,
+    name: str, 
+    step_size: int,
+    duration: int
+) -> str:
+
+    template = osu.read_file(base_path / "data/templates/analysis_report.orb")
+
+    variables = [f'\t"{fmt.format(s = s, t = t)}"\n' for (s, t) in pairs]
+
+    text = template.format(
+        variables_step = "".join(variables),
+        variables_riseset = "\n",
+        name = name,
+        duration = duration,
+        step_size = step_size,
+        trpt = "DELTA"
+    )
+
+    return text
+
+def add_coordinates_view(
+    coordinates: list[tuple[str, str]],
+    fmt: str,
+    name: str,
+    step_size: int,
+    duration: int
+) -> str:
+
+    template = osu.read_file(base_path / "data/templates/analysis_report.orb")
+
+    variables = [f'\t"{fmt.format(a = a, p = p)}"\n' for (a, p) in coordinates]
+
+    text = template.format(
+        variables_step = "".join(variables),
+        variables_riseset = "\n",
+        name = name,
+        duration = duration,
+        step_size = step_size,
+        trpt = "DELTA"
     )
 
     return text
@@ -794,42 +851,79 @@ def generate_orb(
             automatically when opened by SOAP.
     """
 
+    platform_names = [p["object_name"] for p in platforms]
+
     # get base 
     text = add_base(d) + "\n\n"
 
     # add platforms
-    for platform in platforms:
-        text += add_platform(platform) + "\n"
+    for platform_dict in platforms:
+        text += add_platform(platform_dict) + "\n"
 
     # add transmitters
-    for platform in platforms:
-        text += add_transmitter(platform["object_name"]) + "\n"
+    for platform in platform_names:
+        text += add_transmitter(platform)
 
-    combs = combinations(platforms, 2)
-    pairs = [(pair[0]["object_name"], pair[1]["object_name"]) for pair in combs]
+    pairs = list(combinations(platform_names, 2))
+    # pairs = [(pair[0]["object_name"], pair[1]["object_name"]) for pair in combs]
 
     # add links
+    fmt = "Link {s} - {t}"
     for source, target in pairs:
-        text += add_link(source, target) + "\n"
-
-    # add RX_TPOWER analysis variables
-    for source, target in pairs:
-        text += add_analysis_variable("RX_TPOWER", source, target) + "\n"
+        text += add_link(source, target, fmt)
 
     # add receivers
     for source, target in pairs:
-        text += add_receivers(source, target) + "\n"
+        text += add_receivers(source, target)
 
     # add contact analysis report 
+    fmt = "Contact {s} - {t}"
+    vtype = "RX_TPOWER"
+
+    # add RX_TPOWER analysis variables
+    for source, target in pairs:
+        vname = fmt.format(s = source, t = target)
+        variables = [f"{source} - {target}"]
+        text += add_analysis_variable(vname, vtype, variables, -998, 30)
+
     #   (requires transmitters, receivers and receiver analysis variables)
-    text += add_contact_analysis(pairs, step_size, name, duration)
+    report_name = f"{name} Contact Analysis"
+    text += add_contact_analysis_view(pairs, fmt, report_name, duration)
+
+    # add distance analysis report
+    fmt = "Distance {s} - {t}"
+    vtype = "RANGE_MAGNITUDE"
+    upper = 250_000_000.00
+
+    for source, target in pairs:
+        vname = fmt.format(s = source, t = target)
+        variables = [source, target]
+        
+        text += add_analysis_variable(vname, vtype, variables, 0, upper)
+
+    report_name = f"{name} Distances"
+    text += add_distances_view(pairs, fmt, report_name, step_size, duration)
+
+    # add coodinate analysis report
+    fmt = "{p} - {a}-Coordinate"
+    coordinates = list(product(["X", "Y", "Z"], platform_names))
+    for axis, platform in coordinates:
+        vname = fmt.format(a = axis, p = platform)
+        vtype = f"POSITION_{axis}"
+        variables = [".Earth Cartesian", platform, "Earth"]
+        text += add_analysis_variable(vname, vtype, variables, 0, 63781.37)
+        
+    report_name = f"{name} Coordinates"
+    text += add_coordinates_view(coordinates, fmt, report_name, step_size, duration)
+
+
 
     return text
 
 platforms = get_tle_platforms("starlink", dist_min = 200, dist_max = 800)
 
 m = 20
-for k in range(30):
+for k in range(1):
     platforms = sample_platforms(platforms, m)
     text = generate_orb(platforms, f"test_{m}_{k}", TODAY)
     # text = generate_orb([], "test", TODAY)

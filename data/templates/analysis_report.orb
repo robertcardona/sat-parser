@@ -1,13 +1,12 @@
-DEFINE VIEW MVSADATA  "{name} Contact Analysis"
+DEFINE VIEW MVSADATA  "{name}"
   DOMAIN                       0                   {duration}
   DOMDLT                      {step_size}
-  VARIABLES
-  "END_OF_INPUT"
+  VARIABLES {variables_step}     "END_OF_INPUT"
   DATETAG TIME_UNITS
   TIME_OFFSET_TAG NONE
 	  HOUR_OFFSET 0.000000000000000
   FORMAT COLUMN
-  TRPT RISE_SET
+  TRPT {trpt}
   CONFIDENCE_LEVLES  "95, 90, 50"
   AUTOGENMENU OFF
   AUTOGEN ON
@@ -29,5 +28,5 @@ DEFINE VIEW MVSADATA  "{name} Contact Analysis"
   TIME_CHOICE RELATIVE
   DATA_TABLE  ".None."
 	XYTRANS 0.000000 -340.000000
-	RISESET_ANALYSES {variables}     "END_OF_INPUT"
+	RISESET_ANALYSES {variables_riseset}     "END_OF_INPUT"
   REPORT_OPTION RISE_SET_ONLY
