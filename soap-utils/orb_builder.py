@@ -906,11 +906,13 @@ def generate_orb(
 
     # add coodinate analysis report
     fmt = "{p} - {a}-Coordinate"
-    coordinates = list(product(["X", "Y", "Z"], platform_names))
+    coordinates = list(product(["X", "Y", "Z"], platform_names + ["Moon"]))
     for axis, platform in coordinates:
+
         vname = fmt.format(a = axis, p = platform)
         vtype = f"POSITION_{axis}"
         variables = [".Earth Cartesian", platform, "Earth"]
+
         text += add_analysis_variable(vname, vtype, variables, 0, 63781.37)
         
     report_name = f"{name} Coordinates"
@@ -921,10 +923,12 @@ def generate_orb(
     return text
 
 platforms = get_tle_platforms("starlink", dist_min = 200, dist_max = 800)
+lunar = get_lunar_platforms()
+martian = get_martian_platforms()
 
 m = 20
-for k in range(1):
-    platforms = sample_platforms(platforms, m)
+for k in range(30):
+    platforms = sample_platforms(platforms, m) + lunar + martian
     text = generate_orb(platforms, f"test_{m}_{k}", TODAY)
     # text = generate_orb([], "test", TODAY)
     with open(base_path / f"outputs/test_{m}_{k}.orb", "w") as f:
