@@ -1,6 +1,6 @@
-# soap-utils
+# soap-parser
 
-`soap-utils` is a python library for programmatically interact with the 
+`soap-parser` is a python library for programmatically interact with the 
 *Satellite Orbin Analysis Program* (SOAP).
 It can be used to create `.orb` files which are the SOAP filetype, and specify
 custom reports to be generated. The `.orb` files can then be run in batch form
@@ -8,28 +8,15 @@ to generate `.csv` reports as specified in the `.orb` files.
 
 ## Installation
 
-Create a new conda environment with 
-`conda create --name soap python=3.10 numpy pandas pip`
-
-Enter into the new environment with `conda activate soap`
-
-In the root run `export PYTHONPATH=$(pwd)/src`
-
-Install the following pip packages : `pip install sgp4 portion`
-
-Pattern matching is used so we require `python=3.10`. 
-Replacing that code would then only require `python=3.8` if necessary. 
-Run the pip package `vermin` on the files for details.
-
-To install this as an editable pip package, run `pip install -e ./` in the 
-repo folder.
-Or run `pip install git+https://github.com/robertcardona/soap-utils`.
+Create a new conda environment `conda create --name soap python=3.10` and 
+activate it `conda activate soap`, then run 
+`pip install git+https://github.com/robertcardona/soap-parser`.
 
 ## Usage
 
 ### Compatible OSes
 
-We tested the interactions between `soap_utils` and SOAP on MacOS Sonoma and 
+We tested the interactions between `soap_parser` and SOAP on MacOS Sonoma and 
 MacOS Sequoia using SOAP 15.5.0, and on Windows 11 using SOAP 15.6.1.
 
 TODO:
@@ -37,6 +24,26 @@ TODO:
  - [ ] Ubuntu 22.04 (running in UTM on ARM M2)
 
 ## Contributing
+
+### Development environment
+
+Create a new conda environment with 
+`conda create --name soap python=3.10 numpy pandas pip`
+
+Enter into the new environment with `conda activate soap`
+
+Install the following pip packages : `pip install sgp4 portion`
+
+In the root run `export PYTHONPATH=$(pwd)/src`.
+
+Pattern matching is used so we require `python=3.10`. 
+Replacing that code would then only require `python=3.8` if necessary. 
+Run the pip package `vermin` on the files for details.
+
+To install this as an editable pip package, run `pip install -e ./` in the 
+repo folder.
+
+### Background
 
 You may need to make additions or modifications to 
 `orb_builder` and `report_parser`. 
@@ -73,7 +80,7 @@ the entire file into the way it natively arranges it.
 Make sure your conda environment has `mypy`. 
 Run `conda install conda-forge::mypy`.
 
-Run `mypy --ignore-missing-imports ./soap-utils/` before committing.
+Run `mypy --ignore-missing-imports ./src/soap_parser/` before committing.
 
 ## Contributors
 
