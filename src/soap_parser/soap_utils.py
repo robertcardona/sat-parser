@@ -1,4 +1,4 @@
-import os_utils as osu
+from soap_parser import os_utils as osu
 
 from itertools import islice
 from pathlib import Path
@@ -15,7 +15,7 @@ level = logging.WARNING
 logger.setLevel(level)
 logging.basicConfig(level=level)
 
-base_path = Path(__file__).parent.parent
+base_path = Path(__file__).parent
 
 def execute_commands(
         commands: list[list[str]], 

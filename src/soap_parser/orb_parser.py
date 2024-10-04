@@ -4,7 +4,7 @@ This file contains utilities related to parsing `.orb` files and extracting
 data needed by other functions.
 """
 
-from os_utils import read_file
+from soap_parser.os_utils import read_file
 
 from pathlib import Path
 
@@ -16,7 +16,7 @@ level = logging.WARNING
 logger.setLevel(level)
 logging.basicConfig(level=level)
 
-base_path = Path(__file__).parent.parent
+base_path = Path(__file__).parent
 
 def parse_norad(split_line: list[str], name: str) -> dict:
     """

@@ -3,8 +3,8 @@
 This file contains functions related to building an orb file than can be 
     fed into SOAP to generate specified reports.
 """
-import orb_parser as op
-import os_utils as osu
+from soap_parser import orb_parser as op
+from soap_parser import os_utils as osu
 
 from datetime import date, datetime
 from itertools import combinations, product
@@ -26,7 +26,7 @@ level = logging.WARNING
 logger.setLevel(level)
 logging.basicConfig(level=level)
 
-base_path = Path(__file__).parent.parent
+base_path = Path(__file__).parent
 # print(f"{base_path = }")
 
 TODAY: date = date.today()
@@ -439,6 +439,7 @@ def get_tle_platforms(
             platforms.
     """
     filepath = base_path / f"data/{fmt}/{source}.{fmt}"
+    print(filepath)
 
     if fmt == "csv":
         csv_data = pd.read_csv(filepath).astype(str)
@@ -931,5 +932,5 @@ for k in range(30):
     platforms = sample_platforms(platforms, m) + lunar + martian
     text = generate_orb(platforms, f"test_{m}_{k}", TODAY)
     # text = generate_orb([], "test", TODAY)
-    with open(base_path / f"outputs/test_{m}_{k}.orb", "w") as f:
+    with open(base_path.parent.parent / f"outputs/test_{m}_{k}.orb", "w") as f:
         f.write(text)

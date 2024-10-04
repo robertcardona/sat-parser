@@ -13,6 +13,8 @@ Create a new conda environment with
 
 Enter into the new environment with `conda activate soap`
 
+In the root run `export PYTHONPATH=$(pwd)/src`
+
 Install the following pip packages : `pip install sgp4 portion`
 
 Pattern matching is used so we require `python=3.10`. 
