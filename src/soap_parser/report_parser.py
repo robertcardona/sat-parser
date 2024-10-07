@@ -181,7 +181,8 @@ def contact_analysis_report_parser(
 
 def contact_plan_to_matrix(
     nodes: dict[str, int],
-    edges: dict[tuple[int, int], list[float]]
+    edges: dict[tuple[int, int], list[float]],
+    delta: float = 0
 ) -> IntervalMatrix:
 
     n = len(nodes)
@@ -196,6 +197,10 @@ def contact_plan_to_matrix(
         for i in range(0, n, 2):
             rise_time = connections[i]
             set_time = connections[i + 1]
+
+            if set_time - rise_time < delta:
+                logger.debug(f"({source}, {target}) : {rise_time}-{set_time}")
+                continue
 
             matrix[(source, target)] |= P.closed(rise_time, set_time)
             matrix[(target, source)] |= P.closed(rise_time, set_time)

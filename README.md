@@ -34,7 +34,7 @@ Enter into the new environment with `conda activate soap`
 
 Install the following pip packages : `pip install sgp4 portion`
 
-In the root run `export PYTHONPATH=$(pwd)/src`.
+In the root run package `export PYTHONPATH="$PYTHONPATH:$(pwd)/src"`.
 
 Pattern matching is used so we require `python=3.10`. 
 Replacing that code would then only require `python=3.8` if necessary. 

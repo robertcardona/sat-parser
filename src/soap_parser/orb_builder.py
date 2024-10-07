@@ -439,7 +439,7 @@ def get_tle_platforms(
             platforms.
     """
     filepath = base_path / f"data/{fmt}/{source}.{fmt}"
-    print(filepath)
+    # print(filepath)
 
     if fmt == "csv":
         csv_data = pd.read_csv(filepath).astype(str)
@@ -919,18 +919,18 @@ def generate_orb(
     report_name = f"{name} Coordinates"
     text += add_coordinates_view(coordinates, fmt, report_name, step_size, duration)
 
-
-
     return text
 
-platforms = get_tle_platforms("starlink", dist_min = 200, dist_max = 800)
-lunar = get_lunar_platforms()
-martian = get_martian_platforms()
+if __name__ == "__main__":
 
-m = 20
-for k in range(30):
-    platforms = sample_platforms(platforms, m) + lunar + martian
-    text = generate_orb(platforms, f"test_{m}_{k}", TODAY)
-    # text = generate_orb([], "test", TODAY)
-    with open(base_path.parent.parent / f"outputs/test_{m}_{k}.orb", "w") as f:
-        f.write(text)
+    platforms = get_tle_platforms("starlink", dist_min = 200, dist_max = 800)
+    lunar = get_lunar_platforms()
+    martian = get_martian_platforms()
+
+    m = 20
+    for k in range(30):
+        platforms = sample_platforms(platforms, m) + lunar + martian
+        text = generate_orb(platforms, f"test_{m}_{k}", TODAY)
+        # text = generate_orb([], "test", TODAY)
+        with open(base_path / f"outputs/test_{m}_{k}.orb", "w") as f:
+            f.write(text)
