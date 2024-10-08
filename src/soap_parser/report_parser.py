@@ -179,6 +179,47 @@ def contact_analysis_report_parser(
     # return contact_plan
     return nodes, edges
 
+def filter_contact_plan(
+    nodes: dict[str, int],
+    edges: dict[tuple[int, int], list[float]],
+    exclusion_list: list[str] | None = None,
+    inclusion_list: list[str] | None = None,
+    substring_exclusion_list : list[str] | None = None
+) -> tuple[dict[str, int], dict[tuple[int, int], list[float]]]:
+
+    filtered_nodes = {
+        label : node_id for label, node_id in nodes.items()
+        if (
+            (exclusion_list is None or label not in exclusion_list) and 
+            (inclusion_list is None or label in inclusion_list) and 
+            (substring_exclusion_list is None or 
+                not any(s in label for s in substring_exclusion_list))
+        )
+    }
+
+    sorted_filtered_nodes = sorted(
+        filtered_nodes.items(),
+        key = lambda x : x[1]
+    )
+
+    new_id_map = {
+        old_id : new_id 
+            for new_id, (label, old_id) in enumerate(sorted_filtered_nodes)
+    }
+
+    filtered_nodes = {
+        label : new_id_map[old_id] for label, old_id in filtered_nodes.items()
+    }
+
+    filtered_edges = {
+        (new_id_map[i], new_id_map[j]) : value
+            for (i, j), value in edges.items()
+            if i in new_id_map and j in new_id_map
+    }
+
+
+    return filtered_nodes, filtered_edges
+
 def contact_plan_to_matrix(
     nodes: dict[str, int],
     edges: dict[tuple[int, int], list[float]],
@@ -318,8 +359,15 @@ if __name__ == "__main__":
     nodes, edges = contact_analysis_report_parser(filepath)
     print(f"There are {len(nodes)} sats")
     # print(contact_plan)
+    # for key, value in nodes.items():
+    #     print(f"{key} -- {value}")
+
+    nodes, edges = filter_contact_plan(nodes, edges, substring_exclusion_list=["Mars", "Moon"])
+    print(f"There are {len(nodes)} sats")
+
+    exit()
     start, stop = parse_contact_analysis_time(filepath)
-    # print(f"{start = } | {stop = }")
+    print(f"{start = } | {stop = }")
     filepath = base_path / "outputs/test_20_0 Distances.csv"
     distances = distances_report_parser(filepath)
 
