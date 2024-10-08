@@ -4,8 +4,6 @@ This file contains the IntervalMatrix class and associated objects.
 This handles matrices with interval objects as entries.
 """
 
-from __future__ import annotations
-
 # https://stackoverflow.com/questions/33533148/
 from typing import Generator, Iterator, Literal
 
@@ -153,12 +151,12 @@ class IntervalMatrix():
     def get_submatrix(self, 
         row_indices: list[int], 
         column_indices: list[int]
-    ) -> IntervalMatrix:
+    ) -> "IntervalMatrix":
 
         m = len(row_indices)
         n = len(column_indices)
 
-        assert m <= self.dim_row and m <= self.dim_col
+        assert m <= self.dim_row and n <= self.dim_col
         # assert sum(row_indices) == m * (m - 1) // 2 and \
         #             sum(column_indices) == n * (n - 1) // 2 
 
@@ -303,10 +301,9 @@ class IntervalMatrix():
         return True
         
     def __str__(self) -> str:
-        array = [["" for i in range(self.dim_row)] for j in range(self.dim_col)]
+        array = [["" for i in range(self.dim_col)] for j in range(self.dim_row)]
 
         indices = IntervalMatrix.get_indices(self.dim_row, self.dim_col)
-        
         width = 0
         for i, j in indices:
             array_ij =  str(self[i, j])
@@ -361,6 +358,22 @@ def matrix_enumerate(
     for element in matrix:
         yield index, element
         
+        counter += 1
+        index = (counter // dim_col, counter % dim_col)
+
+def upper_matrix_enumerate(
+    matrix: IntervalMatrix
+) -> Generator[tuple[tuple[int, int], P.Interval], None, None]:
+
+    dim_row = matrix.dim_row
+    dim_col = matrix.dim_col
+
+    index = (0, 0)
+    counter = 0
+    for element in matrix:
+        if index[0] <= index[1]:
+            yield index, element
+
         counter += 1
         index = (counter // dim_col, counter % dim_col)
 
@@ -488,10 +501,52 @@ if __name__ == "__main__":
     # nodes = {"B" : 1, "C" : 2, "A" : 0}
     # print(sorted(nodes, key=nodes.__getitem__))
     # print(f"{list(nodes.keys())}")
-    print(matrix)
-    print(matrix.get_submatrix([0, 3], [2, 3]))
+    # print(matrix)
 
-#     e = {(0, 1) : [0.0, 1.0, 2.0, 3.0, 4.0, 5.0], (0, 2) : [], (1, 2) : [4.0, 7.0]}
+    # test `get_submatrix`
+    submatrix = matrix.get_submatrix([0, 2], [1, 2])
+    assert submatrix[0, 0] == matrix[0, 1]
+    assert submatrix[0, 1] == matrix[0, 2]
+
+    submatrix[1, 0] = P.closed(-P.inf, P.inf)
+    assert matrix[2, 1] == P.empty()
+
+    matrix[2, 2] = P.closed(1, 2)
+    assert submatrix[1, 1] == P.closed(-P.inf, P.inf)
+    # print(submatrix)
+    # print(matrix)
+
+    # test `matrix_enumerate` and `upper_matrix_enumerate`
+    array_a = [
+        [P.open(-P.inf,P.inf), P.closed(0, 6), P.closed(6, 10), P.empty()],
+        [P.empty(), P.open(-P.inf,P.inf), P.closed(1, 4), P.closed(3, 7)],
+        [P.empty(), P.empty(), P.open(-P.inf,P.inf), P.closed(0, 8)],
+        [P.empty(), P.empty(), P.empty(), P.open(-P.inf,P.inf)]
+    ]
+
+    matrix = IntervalMatrix(4, 4, array_a)
+    submatrix = matrix.get_submatrix([0, 1], [0, 1, 2, 3])
+    for (i, j), entry in matrix_enumerate(submatrix):
+        assert submatrix[i, j] == entry
+
+    # print(submatrix)
+    for (i, j), entry in upper_matrix_enumerate(submatrix):
+        assert submatrix[i, j] == entry
+        # print(f"{i},{j} -- {entry}")
+
+    submatrix = matrix.get_submatrix([0, 1, 2, 3], [0, 1])
+    for (i, j), entry in matrix_enumerate(submatrix):
+        assert submatrix[i, j] == entry
+
+    # print(submatrix)
+    for (i, j), entry in upper_matrix_enumerate(submatrix):
+        assert submatrix[i, j] == entry
+        # print(f"{i},{j} -- {entry}")
+
+    # print(upper_matrix_enumerate(submatrix))
+
+
+
 
 #     times = sorted(list(set(sum([c for _, c in e.items()], []))))
 #     # print(times)
