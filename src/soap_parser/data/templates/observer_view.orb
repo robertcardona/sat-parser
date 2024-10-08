@@ -14,7 +14,7 @@ DEFINE VIEW WORLD  "{view_id}" "{origin}" "{coordinate_system}"
   ORBITS SET
   ORBIT_LIST "ON"
     {variables}    "END_OF_INPUT"
-  ALINKS SET
+  ALINKS ON
   ACUES SET
   VEC_MODEL SET
   EARTH_MAP ON

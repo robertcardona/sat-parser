@@ -958,7 +958,8 @@ def generate_orb(
 
     # add coodinate analysis report
     fmt = "{p} - {a}-Coordinate"
-    coordinates = list(product(["X", "Y", "Z"], platform_names + ["Moon"]))
+    coordinates = list(product(["X", "Y", "Z"], 
+                        platform_names + ["Moon", "Mars"]))
     for axis, platform in coordinates:
 
         vname = fmt.format(a = axis, p = platform)
@@ -1008,7 +1009,7 @@ if __name__ == "__main__":
     duration = 86_400
     step_size = 300
 
-    m = 2
+    m = 20
     for k in range(1):
         platforms = sample_platforms(platforms, m) + lunar + martian
         text = generate_orb(platforms, f"test_{m}_{k}", TODAY, step_size=step_size, duration=duration)

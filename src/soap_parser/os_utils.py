@@ -120,7 +120,7 @@ def save_to_outputs_file(
 
 def make_folder(path: str) -> None:
     """
-    If the fodler specified by 'path' doesn't exist, this creates it including
+    If the folder specified by 'path' doesn't exist, this creates it including
         any missing folders leading up to it.
 
     Parameters
