@@ -975,44 +975,59 @@ def generate_orb(
 
 
 def save_orb_file(
-    filepath : str | os.PathLike,
+    filepath : Path,
     n: int,
-    day: date,
+    start_date: datetime,
     duration: int,
-    step_size: int
+    step_size: int,
+    lunar: bool = True,
+    martian: bool = True
 ) -> None:
+
+    platforms = get_tle_platforms(
+        "starlink",
+        dist_min = 200,
+        dist_max = 800,
+        d = start_date
+    )
+
+    platforms = sample_platforms(platforms, n)
+    if lunar:
+        platforms += get_lunar_platforms()
+    if martian:
+        platforms += get_martian_platforms()
+
+    text = generate_orb(
+        platforms,
+        filepath.stem,
+        start_date,
+        step_size=step_size,
+        duration=duration
+    )
+    with open(filepath, "w") as f:
+        f.write(text)
 
     return None
 
-# import csv
 if __name__ == "__main__":
-
-    platforms = get_tle_platforms("starlink", dist_min = 200, dist_max = 800)
-    lunar = get_lunar_platforms()
-    martian = get_martian_platforms()
-
-    # with open(base_path / f"outputs/mars.csv", "w") as f:
-    #     # f.write(text)
-    #     w = csv.writer(f)
-
-    #     w.writerow(martian[0].keys())
-    #     for p in martian:
-    #         # p["object_name"] = "Moon" + p["object_name"]
-    #         w.writerow(p.values())
-    #         # print(f"{p["object_name"]}")
-
-    #     # for key, value in p.items():
-    #     #     print(f"\t{key} : {value}")
-    # exit()
 
     # duration = 604_800 * 4 # week
     duration = 86_400
     step_size = 300
 
-    m = 20
+    n = 20
     for k in range(1):
-        platforms = sample_platforms(platforms, m) + lunar + martian
-        text = generate_orb(platforms, f"test_{m}_{k}", TODAY, step_size=step_size, duration=duration)
-        # text = generate_orb([], "test", TODAY)
-        with open(base_path / f"outputs/sl_{m}_{k:03}.orb", "w") as f:
-            f.write(text)
+        save_orb_file(
+            base_path / f"outputs/sl_{n}_{k:03}.orb",
+            n,
+            datetime.now(),
+            duration=duration,
+            step_size=step_size,
+            lunar = True,
+            martian = True
+        )
+        # platforms = sample_platforms(platforms, m) + lunar + martian
+        # text = generate_orb(platforms, f"test_{m}_{k}", TODAY, step_size=step_size, duration=duration)
+        # # text = generate_orb([], "test", TODAY)
+        # with open(, "w") as f:
+        #     f.write(text)
