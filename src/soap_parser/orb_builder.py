@@ -438,6 +438,9 @@ def get_tle_platforms(
         A list of dictionary objects consisting of the data of the specified 
             platforms.
     """
+    if source in ["mars", "moon"]:
+        raise ValueError("`mars` and `moon` do not contain TLE's")
+
     filepath = base_path / f"data/{fmt}/{source}.{fmt}"
     # print(filepath)
 
@@ -512,10 +515,16 @@ def get_lunar_platforms() -> list[dict]:
         A list of dictionary objects consisting of the data of 
             Lunar platforms.
     """
-    filepath = base_path / "data/orb/lunar_scenario.orb"
-    platforms = op.parse_platforms(filepath)
+    filepath = base_path / "data/csv/moon.csv"
+    
+    csv_data = pd.read_csv(filepath).astype(str)
+    rows = csv_data.iterrows()
 
-    platforms = [create_custom_platform(**p) for p in platforms]
+    platforms = [create_custom_platform(**row) for k, row in rows]
+
+    # filepath = base_path / "data/orb/lunar_scenario.orb"
+    # platforms = op.parse_platforms(filepath)
+    # platforms = [create_custom_platform(**p) for p in platforms]
 
     return platforms
 
@@ -529,12 +538,17 @@ def get_martian_platforms() -> list[dict]:
         A list of dictionary objects consisting of the data of 
             Martian platforms.
     """
+    filepath = base_path / "data/csv/mars.csv"
+    
+    csv_data = pd.read_csv(filepath).astype(str)
+    rows = csv_data.iterrows()
 
-    filepath = base_path / "data/orb/martian_scenario.orb"
-    platforms = op.parse_platforms(filepath)
-    platforms = [p for p in platforms if (p["body"] == "Mars" and len(p) > 5)]
+    platforms = [create_custom_platform(**row) for k, row in rows]
 
-    platforms = [create_custom_platform(**p) for p in platforms]
+    # filepath = base_path / "data/orb/martian_scenario.orb"
+    # platforms = op.parse_platforms(filepath)
+    # platforms = [p for p in platforms if (p["body"] == "Mars" and len(p) > 5)]
+    # platforms = [create_custom_platform(**p) for p in platforms]
 
     return platforms
 
@@ -605,8 +619,8 @@ if __name__ == "__main__":
     platforms = get_martian_platforms()
     platform_text = add_platform(platforms[0])
 
-    assert len(platform_text.split()) == 41
-    assert "MarsSat 1" in platform_text
+    assert len(platform_text.split()) == 40
+    assert "MarsSat1" in platform_text
 
     # test ground platform builder : albany
     platform = create_ground_platform(
@@ -814,6 +828,25 @@ def add_coordinates_view(
 
     return text
 
+def add_observer_view(
+    platforms: list[str],
+    name: str,
+    origin: str,
+    coordinate_system: str,
+) -> str:
+
+    template = osu.read_file(base_path / "data/templates/observer_view.orb")
+
+    variables = [f'\t"{p}"\n' for p in platforms]
+
+    text = template.format(
+        view_id = name,
+        origin = origin,
+        coordinate_system = coordinate_system,
+        variables = "".join(variables),
+    )
+    return text
+
 def generate_orb(
     platforms: list[dict],
     name: str,
@@ -877,6 +910,24 @@ def generate_orb(
     for source, target in pairs:
         text += add_receivers(source, target)
 
+    # add world views : moon
+    moon_platforms = [p["object_name"] for p in platforms
+                        if "body" in p and p["body"] == "Moon"]
+
+    for origin in [".Moon CI Observer", ".Moon CR Observer"]:
+        vname = f"{origin} View"
+        system = ".Moon Nadir"
+        text += add_observer_view(moon_platforms, vname, origin, system)
+
+    # add world views : mars
+    mars_platforms = [p["object_name"] for p in platforms
+                        if "body" in p and p["body"] == "Mars"]
+
+    for origin in [".Mars CI Observer", ".Mars CR Observer"]:
+        vname = f"{origin} View"
+        system = ".Mars Nadir"
+        text += add_observer_view(mars_platforms, vname, origin, system)
+
     # add contact analysis report 
     fmt = "Contact {s} - {t}"
     vtype = "RX_TPOWER"
@@ -921,16 +972,46 @@ def generate_orb(
 
     return text
 
+
+def save_orb_file(
+    filepath : str | os.PathLike,
+    n: int,
+    day: date,
+    duration: int,
+    step_size: int
+) -> None:
+
+    return None
+
+# import csv
 if __name__ == "__main__":
 
     platforms = get_tle_platforms("starlink", dist_min = 200, dist_max = 800)
     lunar = get_lunar_platforms()
     martian = get_martian_platforms()
 
-    m = 20
-    for k in range(30):
+    # with open(base_path / f"outputs/mars.csv", "w") as f:
+    #     # f.write(text)
+    #     w = csv.writer(f)
+
+    #     w.writerow(martian[0].keys())
+    #     for p in martian:
+    #         # p["object_name"] = "Moon" + p["object_name"]
+    #         w.writerow(p.values())
+    #         # print(f"{p["object_name"]}")
+
+    #     # for key, value in p.items():
+    #     #     print(f"\t{key} : {value}")
+    # exit()
+
+    # duration = 604_800 * 4 # week
+    duration = 86_400
+    step_size = 300
+
+    m = 2
+    for k in range(1):
         platforms = sample_platforms(platforms, m) + lunar + martian
-        text = generate_orb(platforms, f"test_{m}_{k}", TODAY)
+        text = generate_orb(platforms, f"test_{m}_{k}", TODAY, step_size=step_size, duration=duration)
         # text = generate_orb([], "test", TODAY)
-        with open(base_path / f"outputs/test_{m}_{k}.orb", "w") as f:
+        with open(base_path / f"outputs/sl_{m}_{k:03}.orb", "w") as f:
             f.write(text)

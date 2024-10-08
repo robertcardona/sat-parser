@@ -1,12 +1,13 @@
 DEFINE PLATFORM {system} "{object_name}"
     STATE "{body}" {ic_type} {orbit_type} {semi_major_axis} {eccentricity} {inclination} {ra_of_asc_node} {arg_of_pericenter} {mean_anomaly} {year} {month} {day} {hour} {minute} {second}
-  SHAPE VIEW_ONLY
+  SHAPE SATELLITE
     COLOR Red
   ICON ON
   ERROR_ELLIPSOID OFF
   LABEL ON
   GROUND_TRACE OFF
   SUBPOINT OFF
-  ORBIT OFF
+  ORBIT ON
   DEADB4EPOCH OFF
   INPUT_FRAME PRECESSION
+  
