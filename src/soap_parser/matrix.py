@@ -4,6 +4,8 @@ This file contains the IntervalMatrix class and associated objects.
 This handles matrices with interval objects as entries.
 """
 
+from __future__ import annotations
+
 # https://stackoverflow.com/questions/33533148/
 from typing import Generator, Iterator, Literal
 
@@ -147,6 +149,34 @@ class IntervalMatrix():
     def get_transpose(self) -> "IntervalMatrix":
         array = [list(row) for row in zip(*(self.array))]
         return IntervalMatrix(self.dim_row, self.dim_col, array)
+
+    def get_submatrix(self, 
+        row_indices: list[int], 
+        column_indices: list[int]
+    ) -> IntervalMatrix:
+
+        m = len(row_indices)
+        n = len(column_indices)
+
+        assert m <= self.dim_row and m <= self.dim_col
+        # assert sum(row_indices) == m * (m - 1) // 2 and \
+        #             sum(column_indices) == n * (n - 1) // 2 
+
+        row_indices = sorted(row_indices)
+        column_indices = sorted(column_indices)
+
+        # new_row_indices = [row_indices.index(i) for i in row_indices]
+        # new_column_indices = [column_indices.index(j) for j in column_indices]
+
+        array = IntervalMatrix.empty_array(m, n)
+        for i, j in IntervalMatrix.get_indices(m, n):
+            array[i][j] = self[row_indices[i], column_indices[j]]
+
+        labels = None
+        if self.labels is not None:
+            labels = [self.labels[i] for i in row_indices]
+
+        return IntervalMatrix(m, n, array, labels)
 
     @staticmethod
     def get_indices(rows: int, columns: int) -> list[tuple[int, int]]:
@@ -458,6 +488,8 @@ if __name__ == "__main__":
     # nodes = {"B" : 1, "C" : 2, "A" : 0}
     # print(sorted(nodes, key=nodes.__getitem__))
     # print(f"{list(nodes.keys())}")
+    print(matrix)
+    print(matrix.get_submatrix([0, 3], [2, 3]))
 
 #     e = {(0, 1) : [0.0, 1.0, 2.0, 3.0, 4.0, 5.0], (0, 2) : [], (1, 2) : [4.0, 7.0]}
 
