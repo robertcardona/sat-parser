@@ -141,6 +141,7 @@ if __name__ == "__main__":
     # print(f"{osu.check_os()}")
     # print(filepaths)
     # run_soap_mac(filepaths)
+    # filepaths = [p for p in filepaths if "50" in p]
     run_soap(filepaths)
     # cmd = ["echo"]
     # process = subprocess.Popen(cmd, shell=True)
