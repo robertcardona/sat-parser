@@ -42,7 +42,7 @@ def execute_commands(
         random.shuffle(commands)
 
     processes: Generator[subprocess.Popen[bytes] | None, None, None] = \
-        (subprocess.Popen(cmd, shell=shell) for cmd in commands)
+        (subprocess.Popen(cmd, stdout=subprocess.DEVNULL, shell=shell) for cmd in commands)
     running_processes = list(islice(processes, max_workers))  # start new processes
 
     while running_processes:

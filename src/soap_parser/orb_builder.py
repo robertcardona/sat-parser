@@ -980,12 +980,13 @@ def save_orb_file(
     start_date: datetime,
     duration: int,
     step_size: int,
+    source: str = "starlink",
     lunar: bool = True,
     martian: bool = True
 ) -> None:
 
     platforms = get_tle_platforms(
-        "starlink",
+        source,
         dist_min = 200,
         dist_max = 800,
         d = start_date
