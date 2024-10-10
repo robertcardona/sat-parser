@@ -25,6 +25,83 @@ logging.basicConfig(level=level)
 
 base_path = Path(__file__).parent
 
+class Connection():
+    def __init__(self,
+        rise_time: float,
+        set_time: float,
+        duration: float
+    ) -> None:
+        return None
+
+class Contact():
+    def __init__(self,
+        link: str,
+        source: str,
+        target: str,
+        connections: list[Connection]
+    ) -> None:
+        return None
+
+class ContactPlan():
+    def __init__(self,
+        name: str,
+        start_time: datetime,
+        end_time: datetime,
+        nodes: dict[str, int] | None = None,
+        edges: dict[tuple[int, int], list[float]] | None = None
+    ) -> None:
+
+        self.name = name
+        self.start_time = start_time
+        self.end_time = end_time
+
+        self.nodes: dict[str, int] = {}
+        self.edges: dict[tuple[int, int], list[float]] = {}
+
+        if nodes is not None:
+            self.nodes = nodes
+
+        if edges is not None:
+            self.edges = edges
+
+        return None
+
+    def add_node(self, name: str) -> int:
+
+        self.nodes[name] = len(self.nodes)
+        return len(self.nodes)
+
+    def add_edge(self, source: int, target: int, time: float) -> None:
+        self.edges.setdefault((source, target), []).append(time)
+        return None
+    
+    def pop_edge(self, source: int, target: int) -> None:
+        self.edges[(source, target)].pop()
+        return None
+
+    def get_duration(self) -> int:
+        return int((self.end_time - self.start_time).total_seconds())
+
+class Distances():
+    def __init__(self,
+        delta: float
+    ) -> None:
+        self.nodes : list[str] = []
+
+        self.labels: list[str] = []
+        self.distances: list[list[float]] = []
+        self.delta = delta
+        return None
+
+    def add(self, index: int, distance: float) -> None:
+        
+        return None
+
+    def approximate_distance(self, label: str, time: int) -> float:
+        """Returns the distance """
+        return 0
+
+
 def contact_analysis_parser_v14(content: str) -> list[dict]:
     """
     This function takes in the content of a contact analysis csv output
