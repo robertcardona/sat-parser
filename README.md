@@ -33,6 +33,7 @@ Create a new conda environment with
 Enter into the new environment with `conda activate soap`
 
 Install the following pip packages : `pip install sgp4 portion networkx`
+For visualization run `pip install matplotlib`
 
 In the root run package `export PYTHONPATH="$PYTHONPATH:$(pwd)/src"`.
 

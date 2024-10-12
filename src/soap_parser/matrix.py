@@ -92,6 +92,12 @@ class IntervalMatrix():
         else:
             raise ValueError(f"There is no label associated to index {i}")
 
+    def set_labels(self, labels: list[str]) -> None:
+        if len(labels) != self.dim_row:
+            raise ValueError("`labels` length should agree with `dim_row`")
+        self.labels = labels
+        
+
     def get_index(self, label: str) -> int:
         if self.labels is not None:
             return self.labels.index(label)
