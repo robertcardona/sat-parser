@@ -8,26 +8,23 @@ from soap_parser.matrix import IntervalMatrix, upper_matrix_enumerate
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
 import portion as P
 
 plt.rcParams['keymap.quit'] = ['ctrl+w', 'cmd+w']
-
-# class ContactPlan():
-
-#     def __init__(self, matrix: IntervalMatrix) -> None:
-#         # self.nodes = nodes
-#         # self.edges = edges
-
-#         return None
 
 class TVG():
 
     def __init__(self, matrix: IntervalMatrix) -> None:
 
-        assert matrix.labels is not None
+        # assert matrix.labels is not None
+        if matrix.labels is not None:
+            labels = matrix.labels
+        else:
+            labels = [str(k) for k in range(matrix.dim_row)]
 
         nodes = [(node_id, {"label" : node_label}) 
-            for node_id, node_label in enumerate(matrix.labels)]
+            for node_id, node_label in enumerate(labels)]
         edges = [(i, j, {"contacts" : interval}) 
             for (i, j), interval in upper_matrix_enumerate(matrix)
             if interval != P.empty() and i != j]
@@ -60,13 +57,27 @@ class TVG():
         filter_edge = lambda i, j : t in self.graph[i][j].get("contacts")
         return nx.subgraph_view(self.graph, filter_edge=filter_edge)
 
-    def get_sub_tvg(self, nodes: list[int]) -> "TVG": # nx.Graph:
+    def connected_at(self, u: int, v: int, t: int) -> int:
+        try:
+            return nx.shortest_path_length(self.get_graph_at(t), u, v)
+        except nx.NetworkXNoPath:
+            return 0
+
+    def get_adjacency_matrix_at(self, t: int) -> list[list[int]]:
+        graph = self.get_graph_at(t)
+        array = nx.to_numpy_array(graph).astype(int).tolist()
+        return array
+
+    def get_sub_tvg(self, nodes: list[int]) -> "TVG":
         submatrix = self.get_interval_matrix().get_submatrix(nodes, nodes)
         return TVG(submatrix)
 
-
         # filter_node = lambda i : i in nodes
         # return nx.subgraph_view(self.graph, filter_node=filter_node)
+
+    def get_tvg_window(self, interval: P.Interval) -> "TVG":
+        window_matrix = self.get_interval_matrix().get_window(interval)
+        return TVG(window_matrix)
 
     def get_edges_at(self, t: int) -> list[tuple[int, int]]:
         return [(u, v)
@@ -80,7 +91,6 @@ class TVG():
 
     def edge_alive_at(self, source: int, target: int, t: int) -> bool:
         return t in self.graph.edges[(source, target)]["contacts"]
-        # return False
 
     def get_critical_times(self) -> list[float]:
 
@@ -126,7 +136,13 @@ if __name__ == "__main__":
         # print(f"\t{tn.edge_alive_at(e[0],e[1],8)}")
 
     K = tn.get_graph_at(8)
+    print(nx.to_dict_of_lists(K))
+    print(nx.to_numpy_array(K))
+    print(tn.get_adjacency_matrix_at(8))
     print(tn)
+    assert tn.connected_at(0, 1, 8) == 0
+    assert tn.connected_at(0, 2, 8) == 1
+    assert tn.connected_at(0, 3, 8) == 2
     # G = K
     print(f"{tn.get_edges_at(8)}")
     # exit()
