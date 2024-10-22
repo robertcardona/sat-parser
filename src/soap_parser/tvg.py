@@ -6,6 +6,8 @@ This file contains the TVG (Time-Varying Graph) class (or TemporalNetwork).
 from soap_parser import report_parser as rp
 from soap_parser.matrix import IntervalMatrix, upper_matrix_enumerate
 
+from itertools import combinations
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -59,7 +61,7 @@ class TVG():
 
     def get_teg(self,
         K: float,
-        r: float,
+        r: float, # TODO : change to pass in sample times
         start: float | None = None,
         end: float | None = None
     ) -> nx.DiGraph:
@@ -94,6 +96,54 @@ class TVG():
             previous_graph = graph
 
         return teg
+
+    def get_reeb_graph(self,
+        # clusters: list | None = None,
+        # sub_slice: slice = slice(None, None, 1),
+        sample_times: list[float] | None = None,
+        clusters: list[list[int]] | None = None
+    ) -> nx.Graph:
+        rg = nx.Graph()
+
+        if sample_times is None:
+            assert clusters is None
+            critical_times = self.get_critical_times()
+            sample_times = [t + (critical_times[i + 1] - t) / 2
+                                for i, t in enumerate(critical_times[:-1])]
+
+        if clusters is not None:
+            assert sample_times is not None
+            assert len(sample_times) == len(clusters)
+
+        # add nodes to reeb graph
+        for i, t in enumerate(sample_times):
+            g = self.get_graph_at(t)
+            components = list(nx.connected_components(g))
+
+            if clusters is not None:
+                components = clusters[i]
+
+            for c in components:
+                representative = sorted(list(c))[0]
+                rg.add_node((representative, i),
+                    repr = representative,
+                    column = i,
+                    ec = c # equivalence class
+                )
+
+        # add edges to reeb graph
+        for i, t in enumerate(sample_times[:-1]):
+            nodes = []
+            for n in rg.nodes(data = True):
+                if n[1]["column"] == i or n[1]["column"] == (i + 1):
+                    nodes.append(n)
+
+            pairs = list(combinations(nodes, 2))
+            for source, target in pairs:
+                if source[1]["ec"] & target[1]["ec"]:
+                    rg.add_edge(source[0], target[0])
+
+        return rg
 
     def get_ball(self, u: int, K: float, t: float) -> None:
 
@@ -257,5 +307,5 @@ if __name__ == "__main__":
     # samples = [start + k * r for k in range(int((end - start) / r))]
     # print(f"{samples = }")
 
-    draw_teg(teg)
-
+    # draw_teg(teg)
+    tn.get_reeb_graph()
