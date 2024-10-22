@@ -53,9 +53,59 @@ class TVG():
 
         return matrix
 
-    def get_graph_at(self, t: int) -> nx.Graph:
+    def get_graph_at(self, t: float) -> nx.Graph:
         filter_edge = lambda i, j : t in self.graph[i][j].get("contacts")
         return nx.subgraph_view(self.graph, filter_edge=filter_edge)
+
+    def get_teg(self,
+        K: float,
+        r: float,
+        start: float | None = None,
+        end: float | None = None
+    ) -> nx.DiGraph:
+        teg = nx.DiGraph()
+
+        critical_times = self.get_critical_times()
+        # start, end = critical_times[0], critical_times[-1]
+        if start is None:
+            start = critical_times[0]
+        if end is None:
+            end = critical_times[-1]
+
+        steps = int((end - start) / r)
+        sample_times = [start + i * r for i in range(steps)]
+
+        previous_graph: nx.Graph | None = None
+
+        for index, t in enumerate(sample_times):
+            graph = self.get_graph_at(t)
+
+            for n in graph.nodes():
+                teg.add_node((n, t), identity = n, time = t)
+
+            if previous_graph is not None:
+                distance_matrix = nx.floyd_warshall_numpy(previous_graph)
+
+                nodes = previous_graph.nodes()
+                for i, j in [(i, j) for i in nodes for j in nodes]:
+                    if distance_matrix[i][j] <= K:
+                        teg.add_edge((i, sample_times[index - 1]), (j, t))
+
+            previous_graph = graph
+
+        return teg
+
+    def get_ball(self, u: int, K: float, t: float) -> None:
+
+        return None
+
+    def get_cone(self, u: int, t: float, r: float, s: float) -> None:
+        
+        return None
+
+    def get_temporal_cost(self, u: int, v: int, t: float, r: float) -> None:
+
+        return None
 
     def connected_at(self, u: int, v: int, t: int) -> int:
         try:
@@ -107,6 +157,36 @@ class TVG():
 
 TemporalNetwork = TVG
 
+
+
+def draw_teg(teg) -> None:
+    times = set()
+    identities = set()
+
+    for i in teg.nodes():
+        times.add(teg.nodes[i]["time"])
+        identities.add(teg.nodes[i]["identity"])
+
+    times_list = sorted(list(times))
+    identities_list = list(identities)
+
+    pos = nx.random_layout(teg)
+    x = np.linspace(0, 20, len(times))
+    y = np.linspace(0, 20, len(identities))
+
+    for i in np.arange(len(times_list)):
+        for node in teg.nodes():
+            if teg.nodes[node]["time"] == times_list[i]:
+                pos[node][0] = x[i]
+    for i in np.arange(len(identities_list)):
+        for node in teg.nodes():
+            if teg.nodes[node]["identity"] == identities_list[i]:
+                pos[node][1] = y[i]
+    nx.draw(teg, pos, with_labels = True, node_color = "lightblue", edge_color = "gray")
+    plt.show()
+
+    return None
+
 if __name__ == "__main__":
     array_a = [
         [P.open(-P.inf,P.inf), P.closed(0, 6), P.closed(6, 10), P.empty()],
@@ -118,10 +198,12 @@ if __name__ == "__main__":
     matrix = IntervalMatrix(4, 4, array_a, labels = ["A", "B", "C", "D"])
 
     tn = TemporalNetwork(matrix)
-    # sub_tn = tn.get_sub_tvg([0, 1, 2])
+    
     sub_tn = tn.get_sub_tvg([1, 2, 3])
-    print(sub_tn)
-    print(f"{tn.get_critical_times()}")
+    assert isinstance(sub_tn, TVG)
+    assert [0, 1, 3, 4, 6, 7, 8, 10] == tn.get_critical_times()
+    teg = tn.get_teg(K = 2, r = 0.5)
+    teg = tn.get_teg(K = 2, r = 0.5, start = 2, end = 6)
 
     G = tn.graph
     assert tn.get_node_label(0) == "A"
@@ -150,13 +232,13 @@ if __name__ == "__main__":
     # G = tn.get_graph_on_nodes([0, 1, 2])
     G = tn.graph
     # G = K
-    pos = nx.spring_layout(G)
+    # pos = nx.spring_layout(G)
     # print(nx.get_node_attributes(G, "label"))
 
-    nx.draw_networkx(G, pos,
-        labels = nx.get_node_attributes(G, "label"),
-        edgelist = tn.get_edges_at(8)
-    )
+    # nx.draw_networkx(G, pos,
+    #     labels = nx.get_node_attributes(G, "label"),
+    #     edgelist = tn.get_edges_at(8)
+    # )
     # nx.draw_networkx_nodes(G, pos)
 
     # nx.draw_networkx(G, pos, labels = nx.get_node_attributes(G, "label"))
@@ -165,4 +247,15 @@ if __name__ == "__main__":
     #     pos,
     #     edge_labels = nx.get_edge_attributes(G, "contacts")
     # )
-    plt.show()
+    # plt.show()
+
+    # start = 0
+    # end = 10
+    # r = 0.5
+    # k = (end - start) // r
+    # print(f"{k = }")
+    # samples = [start + k * r for k in range(int((end - start) / r))]
+    # print(f"{samples = }")
+
+    draw_teg(teg)
+
