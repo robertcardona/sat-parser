@@ -307,12 +307,12 @@ def contact_plan_to_matrix(
     matrix = IntervalMatrix(n, n, labels = sorted(nodes, key=nodes.__getitem__))
     
     for i in range(n):
-        matrix[(n, n)] = P.open(-P.inf, P.inf)
+        matrix[(i, i)] = P.open(-P.inf, P.inf)
 
     for (source, target), connections in edges.items():
-        print(f"{source} -- {target} -> {connections}")
+        # print(f"{source} -- {target} -> {connections}")
 
-        for i in range(0, n, 2):
+        for i in range(0, len(connections), 2):
             rise_time = connections[i]
             set_time = connections[i + 1]
 
