@@ -60,22 +60,23 @@ class TVG():
         return nx.subgraph_view(self.graph, filter_edge=filter_edge)
 
     def get_teg(self,
-        K: float,
-        r: float, # TODO : change to pass in sample times
+        sample_times: list[float] | None = None,
+        limit: float = float("inf"),
         start: float | None = None,
         end: float | None = None
     ) -> nx.DiGraph:
         teg = nx.DiGraph()
 
         critical_times = self.get_critical_times()
-        # start, end = critical_times[0], critical_times[-1]
         if start is None:
             start = critical_times[0]
         if end is None:
             end = critical_times[-1]
+        
+        if sample_times is None:
+            sample_times = critical_times
 
-        steps = int((end - start) / r)
-        sample_times = [start + i * r for i in range(steps)]
+        sample_times = list(filter(lambda t : start <= t <= end, sample_times))
 
         previous_graph: nx.Graph | None = None
 
@@ -90,7 +91,7 @@ class TVG():
 
                 nodes = previous_graph.nodes()
                 for i, j in [(i, j) for i in nodes for j in nodes]:
-                    if distance_matrix[i][j] <= K:
+                    if distance_matrix[i][j] <= limit:
                         teg.add_edge((i, sample_times[index - 1]), (j, t))
 
             previous_graph = graph
@@ -98,22 +99,34 @@ class TVG():
         return teg
 
     def get_reeb_graph(self,
-        # clusters: list | None = None,
-        # sub_slice: slice = slice(None, None, 1),
         sample_times: list[float] | None = None,
-        clusters: list[list[int]] | None = None
+        clusters: list[list[int]] | None = None,
+        start: float | None = None,
+        end: float | None = None
     ) -> nx.Graph:
         rg = nx.Graph()
 
+        critical_times = self.get_critical_times()
+        if start is None:
+            start = critical_times[0]
+        if end is None:
+            end = critical_times[-1]
+
         if sample_times is None:
             assert clusters is None
-            critical_times = self.get_critical_times()
+            # critical_times = self.get_critical_times()
             sample_times = [t + (critical_times[i + 1] - t) / 2
                                 for i, t in enumerate(critical_times[:-1])]
 
         if clusters is not None:
             assert sample_times is not None
             assert len(sample_times) == len(clusters)
+
+            # filter clusters between start and end
+            clusters = [c for t, c in zip(sample_times, clusters) if start <= t <= end]
+
+        # filter sample_times between start and end
+        sample_times = list(filter(lambda t : start <= t <= end, sample_times))
 
         # add nodes to reeb graph
         for i, t in enumerate(sample_times):
@@ -196,17 +209,40 @@ class TVG():
 
         time: list[float] = []
         for u, v, c in self.graph.edges.data("contacts"):
-            time += [c.lower, c.upper]
+            for i in c:
+                time += [i.lower, i.upper]
 
         return sorted(list(set(time)))
 
     def __str__(self) -> str:
+        # nodes = " ".join([f"{self.graph.nodes[n]['label']}:{n}" for n in self.graph.nodes])
         nodes = " ".join([f"{n}" for n in self.graph.nodes])
         edges = " ".join([f"{e}" for e in self.graph.edges])
         return f"{nodes} | {edges}"
 
 TemporalNetwork = TVG
 
+def build_cycle_tvg(n: int) -> TVG:
+    matrix = IntervalMatrix(n, n, labels = [str(k) for k in range(n)])
+
+    for k in range(n - 1):
+        matrix[k, k + 1] = P.closed(-P.inf, P.inf)
+    matrix[0, n - 1] = P.closed(-P.inf, P.inf)
+
+    # print(matrix)
+
+    return TVG(matrix)
+
+def build_complete_tvg(n: int) -> TVG:
+    matrix = IntervalMatrix(n, n, labels = [str(k) for k in range(n)])
+
+    for (i, j), _ in upper_matrix_enumerate(matrix):
+        if i != j:
+            matrix[i, j] = P.closed(-P.inf, P.inf)
+
+    # print(matrix)
+
+    return TVG(matrix)
 
 
 def draw_teg(teg) -> None:
@@ -221,8 +257,8 @@ def draw_teg(teg) -> None:
     identities_list = list(identities)
 
     pos = nx.random_layout(teg)
-    x = np.linspace(0, 20, len(times))
-    y = np.linspace(0, 20, len(identities))
+    x = np.linspace(0, 20, len(times_list))
+    y = np.linspace(0, 20, len(identities_list))
 
     for i in np.arange(len(times_list)):
         for node in teg.nodes():
@@ -233,6 +269,33 @@ def draw_teg(teg) -> None:
             if teg.nodes[node]["identity"] == identities_list[i]:
                 pos[node][1] = y[i]
     nx.draw(teg, pos, with_labels = True, node_color = "lightblue", edge_color = "gray")
+    plt.show()
+
+    return None
+
+def draw_reeb_graph(rg: nx.Graph) -> None:
+    times = set()
+
+    for i in rg.nodes():
+        times.add(rg.nodes[i]["column"])
+
+    times_list = sorted(list(times))
+    identities_list = [n for n in rg.nodes() if rg.nodes[n]["column"] == 0]
+
+    pos = nx.random_layout(rg)
+    x = np.linspace(0, 20, len(times_list))
+    y = np.linspace(0, 20, len(identities_list))
+
+    for i in np.arange(len(times_list)):
+        for node in rg.nodes():
+            if rg.nodes[node]["column"] == times_list[i]:
+                pos[node][0] = x[i]
+    for i in np.arange(len(identities_list)):
+        for node in rg.nodes():
+            pos[node][1] = rg.nodes[node]["repr"]
+            # if rg.nodes[node]["repr"] == identities_list[i]:
+            #     pos[node][1] = y[i]
+    nx.draw(rg, pos, with_labels = False, node_color = "lightblue", node_size = 10, edge_color = "gray")
     plt.show()
 
     return None
@@ -252,8 +315,8 @@ if __name__ == "__main__":
     sub_tn = tn.get_sub_tvg([1, 2, 3])
     assert isinstance(sub_tn, TVG)
     assert [0, 1, 3, 4, 6, 7, 8, 10] == tn.get_critical_times()
-    teg = tn.get_teg(K = 2, r = 0.5)
-    teg = tn.get_teg(K = 2, r = 0.5, start = 2, end = 6)
+    # teg = tn.get_teg(K = 2, r = 0.5)
+    # teg = tn.get_teg(K = 2, r = 0.5, start = 2, end = 6)
 
     G = tn.graph
     assert tn.get_node_label(0) == "A"
@@ -309,3 +372,8 @@ if __name__ == "__main__":
 
     # draw_teg(teg)
     tn.get_reeb_graph()
+
+    # print(np.inf == float("inf"))
+
+    im = build_complete_tvg(4)
+    print(f"im = {im}")
