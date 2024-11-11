@@ -158,25 +158,13 @@ class TVG():
 
         return rg
 
-    def get_ball(self, u: int, K: float, t: float) -> None:
-
-        return None
-
-    def get_cone(self, u: int, t: float, r: float, s: float) -> None:
-        
-        return None
-
-    def get_temporal_cost(self, u: int, v: int, t: float, r: float) -> None:
-
-        return None
-
-    def connected_at(self, u: int, v: int, t: int) -> int:
+    def connected_at(self, u: int, v: int, t: float) -> int:
         try:
             return nx.shortest_path_length(self.get_graph_at(t), u, v)
         except nx.NetworkXNoPath:
             return 0
 
-    def get_adjacency_matrix_at(self, t: int) -> list[list[int]]:
+    def get_adjacency_matrix_at(self, t: float) -> list[list[int]]:
         graph = self.get_graph_at(t)
         array = nx.to_numpy_array(graph).astype(int).tolist()
         return array
@@ -274,12 +262,13 @@ def draw_teg(teg) -> None:
     return None
 
 def draw_reeb_graph(rg: nx.Graph) -> None:
-    times = set()
+    # TODO : add legend based on if representative reaches threshold
 
-    for i in rg.nodes():
-        times.add(rg.nodes[i]["column"])
+    # times = set()
+    # for i in rg.nodes():
+    #     times.add(rg.nodes[i]["column"])
 
-    times_list = sorted(list(times))
+    times_list = sorted(list({rg.nodes[i]["column"] for i in rg.nodes()}))
     identities_list = [n for n in rg.nodes() if rg.nodes[n]["column"] == 0]
 
     pos = nx.random_layout(rg)
@@ -311,6 +300,7 @@ if __name__ == "__main__":
     matrix = IntervalMatrix(4, 4, array_a, labels = ["A", "B", "C", "D"])
 
     tn = TemporalNetwork(matrix)
+    # print(f"{len(tn.graph)}")
     
     sub_tn = tn.get_sub_tvg([1, 2, 3])
     assert isinstance(sub_tn, TVG)
@@ -371,7 +361,8 @@ if __name__ == "__main__":
     # print(f"{samples = }")
 
     # draw_teg(teg)
-    tn.get_reeb_graph()
+    rg = tn.get_reeb_graph()
+    draw_reeb_graph(rg)
 
     # print(np.inf == float("inf"))
 
