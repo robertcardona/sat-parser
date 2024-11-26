@@ -98,9 +98,10 @@ class TVG():
 
         return teg
 
+    # TODO : rename to build
     def get_reeb_graph(self,
         sample_times: list[float] | None = None,
-        clusters: list[list[int]] | None = None,
+        clusters_list: list[list[list[int]]] | None = None,
         start: float | None = None,
         end: float | None = None
     ) -> nx.Graph:
@@ -113,17 +114,18 @@ class TVG():
             end = critical_times[-1]
 
         if sample_times is None:
-            assert clusters is None
+            assert clusters_list is None
             # critical_times = self.get_critical_times()
             sample_times = [t + (critical_times[i + 1] - t) / 2
                                 for i, t in enumerate(critical_times[:-1])]
 
-        if clusters is not None:
+        if clusters_list is not None:
             assert sample_times is not None
-            assert len(sample_times) == len(clusters)
+            assert len(sample_times) == len(clusters_list)
 
             # filter clusters between start and end
-            clusters = [c for t, c in zip(sample_times, clusters) if start <= t <= end]
+            clusters_list = [c for t, c in zip(sample_times, clusters_list) 
+                            if start <= t <= end]
 
         # filter sample_times between start and end
         sample_times = list(filter(lambda t : start <= t <= end, sample_times))
@@ -133,15 +135,15 @@ class TVG():
             g = self.get_graph_at(t)
             components = list(nx.connected_components(g))
 
-            if clusters is not None:
-                components = clusters[i]
+            if clusters_list is not None:
+                components = clusters_list[i]
 
             for c in components:
                 representative = sorted(list(c))[0]
                 rg.add_node((representative, i),
                     repr = representative,
                     column = i,
-                    ec = c # equivalence class
+                    ec = set(c) # equivalence class
                 )
 
         # add edges to reeb graph
@@ -201,6 +203,15 @@ class TVG():
                 time += [i.lower, i.upper]
 
         return sorted(list(set(time)))
+
+    def __format__(self, spec: str) -> str:
+        if spec == "n":
+            g = self.graph
+
+            nodes = "\n".join([f"{n}:{g.nodes[n]['label']}" for n in g.nodes])
+            # edges = " ".join([f"{e}" for e in self.graph.edges])
+            return f"{nodes}"
+        return str(self)
 
     def __str__(self) -> str:
         # nodes = " ".join([f"{self.graph.nodes[n]['label']}:{n}" for n in self.graph.nodes])
