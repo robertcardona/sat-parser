@@ -272,33 +272,33 @@ def draw_teg(teg) -> None:
 
     return None
 
-def draw_reeb_graph(rg: nx.Graph) -> None:
-    # TODO : add legend based on if representative reaches threshold
+# def draw_reeb_graph(rg: nx.Graph) -> None:
+#     # TODO : add legend based on if representative reaches threshold
 
-    # times = set()
-    # for i in rg.nodes():
-    #     times.add(rg.nodes[i]["column"])
+#     # times = set()
+#     # for i in rg.nodes():
+#     #     times.add(rg.nodes[i]["column"])
 
-    times_list = sorted(list({rg.nodes[i]["column"] for i in rg.nodes()}))
-    identities_list = [n for n in rg.nodes() if rg.nodes[n]["column"] == 0]
+#     times_list = sorted(list({rg.nodes[i]["column"] for i in rg.nodes()}))
+#     identities_list = [n for n in rg.nodes() if rg.nodes[n]["column"] == 0]
 
-    pos = nx.random_layout(rg)
-    x = np.linspace(0, 20, len(times_list))
-    y = np.linspace(0, 20, len(identities_list))
+#     pos = nx.random_layout(rg)
+#     x = np.linspace(0, 20, len(times_list))
+#     y = np.linspace(0, 20, len(identities_list))
 
-    for i in np.arange(len(times_list)):
-        for node in rg.nodes():
-            if rg.nodes[node]["column"] == times_list[i]:
-                pos[node][0] = x[i]
-    for i in np.arange(len(identities_list)):
-        for node in rg.nodes():
-            pos[node][1] = rg.nodes[node]["repr"]
-            # if rg.nodes[node]["repr"] == identities_list[i]:
-            #     pos[node][1] = y[i]
-    nx.draw(rg, pos, with_labels = False, node_color = "lightblue", node_size = 10, edge_color = "gray")
-    plt.show()
+#     for i in np.arange(len(times_list)):
+#         for node in rg.nodes():
+#             if rg.nodes[node]["column"] == times_list[i]:
+#                 pos[node][0] = x[i]
+#     for i in np.arange(len(identities_list)):
+#         for node in rg.nodes():
+#             pos[node][1] = rg.nodes[node]["repr"]
+#             # if rg.nodes[node]["repr"] == identities_list[i]:
+#             #     pos[node][1] = y[i]
+#     nx.draw(rg, pos, with_labels = False, node_color = "lightblue", node_size = 10, edge_color = "gray")
+#     plt.show()
 
-    return None
+#     return None
 
 if __name__ == "__main__":
     array_a = [
@@ -373,7 +373,7 @@ if __name__ == "__main__":
 
     # draw_teg(teg)
     rg = tn.get_reeb_graph()
-    draw_reeb_graph(rg)
+    # draw_reeb_graph(rg)
 
     # print(np.inf == float("inf"))
 

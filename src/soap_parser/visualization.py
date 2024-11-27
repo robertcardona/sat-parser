@@ -11,16 +11,17 @@ from soap_parser.tvg import *
 
 def convert_figure(figure: plt.Figure) -> ImageFile.ImageFile:
     figure.savefig(buffer := io.BytesIO(), bbox_inches = "tight")
+    # figure.savefig(buffer := io.BytesIO(), pad_inches = 0.75)
     buffer.seek(0)
     return Image.open(buffer)
 
-def save_gif(filename: str, images: list[ImageFile.ImageFile]) -> None:
+def save_gif(filename: str, images: list[ImageFile.ImageFile], duration: int = 750) -> None:
     images[0].save(
         filename,
         save_all=True,
         append_images=images[1:],
         optimize=False,
-        duration=750,
+        duration=duration,
         loop=0
     )
 
@@ -41,6 +42,42 @@ def circular_pos(g: nx.Graph) -> dict[int, tuple[int, int]]:
         
     return pos
 
+def draw_reeb_graph(rg: nx.Graph) -> ImageFile.ImageFile:
+    # TODO : add legend based on if representative reaches threshold
+
+    # times = set()
+    # for i in rg.nodes():
+    #     times.add(rg.nodes[i]["column"])
+
+    times_list = sorted(list({rg.nodes[i]["column"] for i in rg.nodes()}))
+    identities_list = [n for n in rg.nodes() if rg.nodes[n]["column"] == 0]
+
+    pos = nx.random_layout(rg)
+    x = np.linspace(0, 20, len(times_list))
+    y = np.linspace(0, 20, len(identities_list))
+
+    for i in np.arange(len(times_list)):
+        for node in rg.nodes():
+            if rg.nodes[node]["column"] == times_list[i]:
+                pos[node][0] = x[i]
+    for i in np.arange(len(identities_list)):
+        for node in rg.nodes():
+            pos[node][1] = rg.nodes[node]["repr"]
+            # if rg.nodes[node]["repr"] == identities_list[i]:
+            #     pos[node][1] = y[i]
+    nx.draw(rg, pos, with_labels = False, node_color = "lightblue", node_size = 10, edge_color = "gray")
+    # plt.show()
+
+    figure = plt.gcf()
+    # plt.clf()
+
+    image = convert_figure(figure)
+
+    plt.clf()
+
+    return image
+
+# TODO : copy over latest version from curvature
 def save_tvg(
     tvg: TVG,
     filename: str,
@@ -53,6 +90,8 @@ def save_tvg(
     images: list[ImageFile.ImageFile] = []
 
     for t in sample_times:
+        fig = plt.figure(figsize=(5, 5))
+
         g = tvg.get_graph_at(t)
         pos = circular_pos(g)
 
