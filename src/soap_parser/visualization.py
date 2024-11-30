@@ -42,7 +42,7 @@ def circular_pos(g: nx.Graph) -> dict[int, tuple[int, int]]:
         
     return pos
 
-def draw_reeb_graph(rg: nx.Graph) -> ImageFile.ImageFile:
+def draw_reeb_graph(rg: nx.Graph, title: str | None = None) -> ImageFile.ImageFile:
     # TODO : add legend based on if representative reaches threshold
 
     # times = set()
@@ -68,12 +68,17 @@ def draw_reeb_graph(rg: nx.Graph) -> ImageFile.ImageFile:
     nx.draw(rg, pos, with_labels = False, node_color = "lightblue", node_size = 10, edge_color = "gray")
     # plt.show()
 
+    if title is not None:
+        plt.title(f"Reeb Graph {title}")
+
     figure = plt.gcf()
     # plt.clf()
 
     image = convert_figure(figure)
 
     plt.clf()
+    plt.cla()
+    plt.close()
 
     return image
 
